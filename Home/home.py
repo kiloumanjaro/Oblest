@@ -12,7 +12,7 @@ def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 # Create the application window with ttkbootstrap theme
-app = ttk.Window(themename="litera")  # You can change the theme to your preference
+app = ttk.Window(themename="custom")  # You can change the theme to your preference
 app.geometry("480x820")  # Width x Height in pixels
 totaldays = 203
 dayspassed = 90
@@ -22,39 +22,56 @@ right_icon = PhotoImage(file=str(relative_to_assets("right_icon.png")))
 left_icon = PhotoImage(file=str(relative_to_assets("left_icon.png")))
 
 # Create frames for each section
-frame_controls = ttk.Frame(app, bootstyle="primary", padding=0)
+frame_controls = ttk.Frame(app, padding=0)
 frame_controls.pack(fill="x", padx=10, pady=(10, 5))
 
-frame_text = ttk.Frame(app, bootstyle="secondary", padding=10)
+frame_text = ttk.Frame(app, bootstyle="primary", padding=10)
 frame_text.pack(fill="x", padx=10, pady=5)
 
-frame_circle = ttk.Frame(app, bootstyle="light", padding=10)
+frame_circle = ttk.Frame(app, bootstyle="primary", padding=10)
 frame_circle.pack(fill="x", padx=10, pady=10)
 
-frame_days = ttk.Frame(app, bootstyle="light", padding=5)
+frame_days = ttk.Frame(app, bootstyle="primary", padding=5)
 frame_days.pack(fill="x", padx=10, pady=0, anchor="center")
 
-frame_progress = ttk.Frame(app, bootstyle="light", padding=5)
+frame_progress = ttk.Frame(app, bootstyle="primary", padding=5)
 frame_progress.pack(fill="x", padx=10, pady=0, anchor="center")
 
 # Empty frame to add space between pages and progress
 frame_empty = ttk.Frame(app, bootstyle="primary", padding=5)
 frame_empty.pack(fill="x", padx=10, pady=(10, 5))  # Adjust the padding as needed
 
+overlay_frame = ttk.Frame(app, bootstyle="secondary", padding=10)
+overlay_frame.place(x=50, y=300, width=200, height=100)  # Position and size the frame
+overlay_frame.tkraise()  # Bring it to the front
+
+overlay_label = ttk.Label(
+    overlay_frame,
+    text="Ag",
+    font=("Helvetica", 40),
+    bootstyle="fg"
+)
+overlay_label.pack(pady=10)
 
 frame_pages = ttk.Frame(app, padding=5)
 frame_pages.pack(padx=0, pady=0, anchor="center")
 
-frame_button = ttk.Frame(app, bootstyle="light", padding=0)
+frame_button = ttk.Frame(app, bootstyle="primary", padding=0)
 frame_button.pack(fill="x", padx=10, pady=(0,10), side="bottom")
 
+def change_meter_color():
+    # meter.configure(bootstyle="warning")  # gold
+    # meter.configure(bootstyle="info")  # diamond
+    # meter.configure(bootstyle="success")  # silver
+    meter.configure(bootstyle="dark")  # bronze
+    meter.configure(showtext=False)
 # Controls section with two buttons
 button_left = ttk.Button(
     frame_controls,
     text="",  # No text
     image=left_icon,  # Set the icon
-    command=lambda: print("Left button clicked"),
-    bootstyle="primary"
+    command=change_meter_color,  # Change the meter color when clicked
+    bootstyle="primary, link"
 )
 button_left.pack(side="left", padx=0, anchor="w")  # Align left
 
@@ -72,7 +89,7 @@ motivation = ttk.Label(
     frame_text, 
     text="Keep Going!", 
     font=("Helvetica", 22, "bold"), 
-    bootstyle="danger")
+    bootstyle="fg")
 motivation.pack(side="top", pady=0, anchor="w")
 
 # Add the current date below the "Keep Going!" text
@@ -80,7 +97,9 @@ current_date = datetime.now().strftime("%B %d, %Y")  # Format: e.g., November 20
 date = ttk.Label(
     frame_text, 
     text=current_date, 
-    font=("Helvetica", 11), bootstyle="secondary")
+    font=("Helvetica", 11), 
+    bootstyle="secondary"
+    )
 date.pack(side="top", pady=5, anchor="w")
 
 # Circle section (Meter widget)
@@ -89,7 +108,7 @@ meter = ttk.Meter(
     metersize=260,
     meterthickness=30,
     padding=0,
-    amountused=round((dayspassed / totaldays) * 100),
+    amountused=int((dayspassed / totaldays) * 100),  # Ensure this is an integer
     metertype="full",
     interactive=True,
     textfont=['Helvetica', 40, 'normal'],
@@ -102,7 +121,7 @@ label_1 = ttk.Label(
     frame_days,
     text=f"{totaldays} Days",
     font=("Helvetica", 12),
-    bootstyle="danger"
+    bootstyle="fg"
 )
 label_1.pack(side="left", pady=0, anchor="w")
 
@@ -110,7 +129,7 @@ label_2 = ttk.Label(
     frame_days,
     text=f"Remaining: {dayspassed}",
     font=("Helvetica", 12),
-    bootstyle="danger"
+    bootstyle="fg"
 )
 label_2.pack(side="right", pady=0, anchor="e")
 
@@ -119,8 +138,8 @@ progress_bar = ctk.CTkProgressBar(
     width=360,
     height=20,
     corner_radius=10,
-    progress_color="#cf5b58",
-    fg_color="#e8e7e7",
+    progress_color="#DC7373",
+    fg_color="#f7f7f7",
 )
 progress_bar.set(dayspassed / totaldays)
 progress_bar.pack(pady=0)
@@ -140,38 +159,65 @@ space = ttk.Label(
 )
 space.pack(side="left", pady=0)
 
-radio_button_1 = ttk.Radiobutton(
-    frame_pages, 
+radio_button_1 = ctk.CTkRadioButton(
+    master=frame_pages,
+    text="",
+    radiobutton_width=8,
+    radiobutton_height=8,
     variable=radio_value, 
     value="1",
-    bootstyle="info"
+    border_width_unchecked=4 ,
+    border_width_checked=4,
+    border_color="#D9D9D9",
+    fg_color="#DC7373",
+    width=0,
+    hover=False
 )
 radio_button_1.pack(side="left", padx=0)
 
-radio_button_2 = ttk.Radiobutton(
-    frame_pages, 
+# Create a CTkRadioButton
+radio_button_2 = ctk.CTkRadioButton(
+    master=frame_pages,
+    text="",
+    radiobutton_width=8,
+    radiobutton_height=8,
     variable=radio_value, 
     value="2",
-    bootstyle="info"
+    border_width_unchecked=4,
+    border_width_checked=4,
+    border_color="#D9D9D9",
+    fg_color="#DC7373",
+    width=0,
+    hover=False
 )
+
 radio_button_2.pack(side="left", padx=0)
 
-radio_button_3 = ttk.Radiobutton(
-    frame_pages,  
+
+radio_button_3 = ctk.CTkRadioButton(
+    master=frame_pages,
+    text="",
+    radiobutton_width=8,
+    radiobutton_height=8,
     variable=radio_value, 
     value="3",
-    bootstyle="info",
+    border_width_unchecked=4,
+    border_width_checked=4,
+    border_color="#D9D9D9",
+    fg_color="#DC7373",
+    width=0,
+    hover=False
 )
-radio_button_3.pack(side="right", padx=0)
-
+radio_button_3.pack(side="left", padx=0)
 
 
 # Button section
 button_1 = ctk.CTkButton(
     master=frame_button,
     text="Set Goals",
+    text_color="white",  # Set text color to white
     command=lambda: print("Set Goals button clicked"),
-    fg_color="#cf5b58",
+    fg_color="#DC7373",
     hover_color="#c4524e",
     width=360,
     height=55,
