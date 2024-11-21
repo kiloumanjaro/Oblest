@@ -12,7 +12,7 @@ def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 # Create the application window with ttkbootstrap theme
-app = ttk.Window(themename="custom")  # You can change the theme to your preference
+app = ttk.Window(themename="litera")  # You can change the theme to your preference
 app.geometry("480x820")  # Width x Height in pixels
 totaldays = 203
 dayspassed = 90
