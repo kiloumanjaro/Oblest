@@ -15,7 +15,7 @@ def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 # --- Main App Window (From First Snippet) ---
-app = ttk.Window(themename="litera")  # You can change the theme to your preference
+app = ttk.Window(themename="custom")  # You can change the theme to your preference
 app.geometry("480x820")  # Width x Height in pixels
 totaldays = 203
 dayspassed = 90
@@ -45,14 +45,14 @@ def show_task_form():
     task_title_entry = ttk.Entry(frame_task_form, width=50)
     task_title_entry.pack(pady=10)
 
-    # Deadline Date
+    # Deadline Date / Using Calendar
     ttk.Label(frame_task_form, text="Deadline Date:").pack(pady=10)
-    deadline_date_entry = ttk.DateEntry(frame_task_form, bootstyle="danger")
+    deadline_date_entry = ttk.DateEntry(master=frame_task_form, bootstyle="danger", dateformat="%Y-%m-%d",)
     deadline_date_entry.pack(pady=10)
 
     # Course List
     ttk.Label(frame_task_form, text="Course:", font=('Helvetica', 14, 'bold')).pack(pady=10)
-    courses = ["", "Course 1", "Course 2", "Course 3"]
+    courses = ["General", "Course 1", "Course 2", "Course 3"]
     course_var = tk.StringVar()
     course_var.set(courses[0])
     course_dropdown = ctk.CTkComboBox(
@@ -113,13 +113,13 @@ def show_task_form():
 
     ctk.CTkButton(
         master=button_frame, 
-        text="Submit", font=('Helvetica', 16, 'bold'), text_color="white", 
+        text="Submit", font=('Helvetica', 14), text_color="white", 
         command=submit_task_form, corner_radius=20, fg_color="#cf5b58", hover_color="#c4524e"
     ).pack(side="left", padx=10)
 
     ctk.CTkButton(
         master=button_frame, 
-        text="Cancel", font=('Helvetica', 16, 'bold'), text_color="white", 
+        text="Cancel", font=('Helvetica', 14), text_color="white", 
         command=hide_task_form, corner_radius=20, fg_color="#cf5b58", hover_color="#c4524e"
     ).pack(side="left", padx=10)
 
@@ -227,21 +227,20 @@ button1.configure(command=lambda: select_button(button1))
 button2.configure(command=lambda: select_button(button2))
 button3.configure(command=lambda: select_button(button3))
 
-# --- Add Task Button (From Second Snippet) ---
 task_button = ctk.CTkButton(
-    master=frame_tasks, 
-    text="Add Task",             
+    master=frame_tasks,
+    text="Add Task",
+    text_color="white",  # Set text color to white
+    # command=lambda: print("Add Task button clicked"),
     command=show_task_form, 
-    width=200,
-    height=50,
-    font=('Helvetica', 18, 'bold'),
-    text_color="white",
-    corner_radius=20, 
-    fg_color="#cf5b58", 
+    fg_color="#DC7373",
     hover_color="#c4524e",
-    anchor= "center"
-    )
-task_button.pack(pady=20, padx=20, side="bottom", fill="x")
+    width=360,
+    height=55,
+    corner_radius=20,
+    font=("Helvetica", 16),
+)
+task_button.pack(side="bottom", anchor="s", pady=10)
 
 # --- Main App Loop (From First Snippet) ---
 app.mainloop()
