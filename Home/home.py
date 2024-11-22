@@ -7,12 +7,13 @@ from datetime import datetime  # Import datetime module for the current date
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / "assets"
+rank = "copper"
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 # Create the application window with ttkbootstrap theme
-app = ttk.Window(themename="custom")  # You can change the theme to your preference
+app = ttk.Window(themename="litera")  # You can change the theme to your preference
 app.geometry("480x820")  # Width x Height in pixels
 totaldays = 203
 dayspassed = 90
@@ -41,17 +42,8 @@ frame_progress.pack(fill="x", padx=10, pady=0, anchor="center")
 frame_empty = ttk.Frame(app, bootstyle="primary", padding=5)
 frame_empty.pack(fill="x", padx=10, pady=(10, 5))  # Adjust the padding as needed
 
-overlay_frame = ttk.Frame(app, bootstyle="secondary", padding=10)
-overlay_frame.place(x=50, y=300, width=200, height=100)  # Position and size the frame
-overlay_frame.tkraise()  # Bring it to the front
-
-overlay_label = ttk.Label(
-    overlay_frame,
-    text="Ag",
-    font=("Helvetica", 40),
-    bootstyle="fg"
-)
-overlay_label.pack(pady=10)
+# Overlay Frame Example
+overlay_frame = ttk.Frame(app, bootstyle="primary", padding=10)
 
 frame_pages = ttk.Frame(app, padding=5)
 frame_pages.pack(padx=0, pady=0, anchor="center")
@@ -59,18 +51,59 @@ frame_pages.pack(padx=0, pady=0, anchor="center")
 frame_button = ttk.Frame(app, bootstyle="primary", padding=0)
 frame_button.pack(fill="x", padx=10, pady=(0,10), side="bottom")
 
+def show_overlay():
+    # Make the overlay frame visible
+    overlay_frame.place(x=165, y=325, width=150, height=120)
+    overlay_frame.tkraise()  # Bring it to the front
+
+    # Corrected overlay_label content based on rank
+    if rank == "copper":
+        overlay_label.config(text="Cu", bootstyle="dark")
+    elif rank == "silver":
+        overlay_label.config(text="Ag", bootstyle="success")
+    elif rank == "gold":
+        overlay_label.config(text="Au", bootstyle="warning")
+    elif rank == "diamond":
+        overlay_label.config(text="C", bootstyle="info")
+    else:
+        overlay_label.config(text="Na", bootstyle="primary")
+
+
+# Add content to the overlay frame
+overlay_label = ttk.Label(
+    overlay_frame,
+    text="Ag",
+    font=("Helvetica", 37), 
+    bootstyle="danger"
+)
+overlay_label.pack(pady=10)
+
 def change_meter_color():
-    # meter.configure(bootstyle="warning")  # gold
-    # meter.configure(bootstyle="info")  # diamond
-    # meter.configure(bootstyle="success")  # silver
-    meter.configure(bootstyle="dark")  # bronze
+    # Update meter color based on rank
+    if rank == "copper":
+        meter.configure(bootstyle="dark")  # copper
+    elif rank == "silver":
+        meter.configure(bootstyle="success")  # silver
+    elif rank == "gold":
+        meter.configure(bootstyle="warning")  # gold
+    elif rank == "diamond":
+        meter.configure(bootstyle="info")  # diamond
+    else:
+        meter.configure(bootstyle="primary")  # default
+
     meter.configure(showtext=False)
+
+
+def rank_view():
+    change_meter_color()
+    show_overlay()
+
 # Controls section with two buttons
 button_left = ttk.Button(
     frame_controls,
     text="",  # No text
     image=left_icon,  # Set the icon
-    command=change_meter_color,  # Change the meter color when clicked
+    command= rank_view,  # Change the meter color when clicked
     bootstyle="primary, link"
 )
 button_left.pack(side="left", padx=0, anchor="w")  # Align left
