@@ -103,49 +103,65 @@ def show_task_form():
         frame_task_form.pack_forget()  # Hide task form
         frame_tasks.pack(fill="both", expand=True)  # Show main tasks frame again
 
-    # Submit and Cancel Buttons
+    # Framed Submit and Cancel Buttons
+    
+    button_frame = ctk.CTkFrame(
+        master=frame_task_form,
+        fg_color="#f8f9fa",
+        )
+    button_frame.pack(pady=10)
+
     ctk.CTkButton(
-        master=frame_task_form, 
+        master=button_frame, 
         text="Submit", font=('Helvetica', 16, 'bold'), text_color="white", 
         command=submit_task_form, corner_radius=20, fg_color="#cf5b58", hover_color="#c4524e"
-    ).pack(pady=10)
+    ).pack(side="left", padx=10)
+
     ctk.CTkButton(
-        master=frame_task_form, 
+        master=button_frame, 
         text="Cancel", font=('Helvetica', 16, 'bold'), text_color="white", 
         command=hide_task_form, corner_radius=20, fg_color="#cf5b58", hover_color="#c4524e"
-    ).pack(pady=10)
+    ).pack(side="left", padx=10)
 
 # --- Grid Buttons (Refactored without class) ---
 
-Task_Text = Label(
+Task_Text = ctk.CTkLabel(
     master=frame_tasks,
     text="You completed",
-    font=('Helvetica', 12),
+    font=('Helvetica', 16),
+    fg_color="#f8f9fa",
+    text_color="black"
+    
 )
 
 Task_Text.pack(side='top', anchor='w', pady=(50, 0), padx=(20, 0))
 
-Tasks_Completed_Frame = Frame(
-    master=frame_tasks    
+Tasks_Completed_Frame = ctk.CTkFrame(
+    master=frame_tasks,
+    # bg_color="#f8f9fa"
+    fg_color="#f8f9fa",
+    border_color="#f8f9fa",
 )
 Tasks_Completed_Frame.pack(side='top', anchor='w', pady=(0, 0), padx=(20, 0))
 
-Tasks_Completed = Label(
+Tasks_Completed = ctk.CTkLabel(
     master=Tasks_Completed_Frame,
     # text=f"{somenumberhere}";
     text="234",
-    font=('Helvetica', 55, 'bold'),
-    anchor='w'
+    font=('Helvetica', 120, 'bold'),
+    anchor='w',
+    text_color="black"
 )
 Tasks_Completed.pack(side='left', anchor='sw')
 
-Tasks_Completed_Text = Label(
+Tasks_Completed_Text = ctk.CTkLabel(
     master=Tasks_Completed_Frame,
     text="tasks",
-    font=('Helvetica', 20),
-    anchor='w'
+    font=('Helvetica', 30),
+    anchor='w',
+    text_color="black"
 )
-Tasks_Completed_Text.pack(side='left', anchor='sw', pady=(0,10))
+Tasks_Completed_Text.pack(side='left', anchor='sw', pady=(0,20), padx=(5,0))
 
 # Create a CTkFrame as the background in frame_tasks
 canvas = ctk.CTkFrame(
@@ -228,4 +244,4 @@ task_button = ctk.CTkButton(
 task_button.pack(pady=20, padx=20, side="bottom", fill="x")
 
 # --- Main App Loop (From First Snippet) ---
-# app.mainloop()
+app.mainloop()
