@@ -10,6 +10,7 @@ OUTPUT_PATH = Path(__file__).parent
 from Home.home import create_home_page
 from Productivity.productivity import create_productivity_page
 from Tasks.tasks import create_tasks_page
+from Tasks.TaskManager import *
 
 # Create the application window
 app = ttk.Window(themename="custom")  # Using ttkbootstrap for theming
