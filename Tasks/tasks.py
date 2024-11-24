@@ -58,31 +58,19 @@ def create_tasks_page(app):
     # Section 3: Frame Creation
     # ==============================================
 
-    # Frames
-    frame_controls = ttk.Frame(app, padding=0)
-    frame_controls.pack(fill="x", padx=10, pady=(10, 5))
-
-    # frame_text = ttk.Frame(app, bootstyle="primary", padding=10)
+    # frame_text = ttk.Frame(frame_taskpage bootstyle="primary", padding=10)
     # frame_text.pack(fill="x", padx=10, pady=5)
 
-    # frame_days = ttk.Frame(app, bootstyle="primary", padding=5)
+    # frame_days = ttk.Frame(frame_taskpage bootstyle="primary", padding=5)
     # frame_days.pack(fill="x", padx=10, pady=0, anchor="center")
 
-    # frame_empty = ttk.Frame(app, bootstyle="primary", padding=5)
+    # frame_empty = ttk.Frame(frame_taskpage bootstyle="primary", padding=5)
     # frame_empty.pack(fill="x", padx=10, pady=(10, 5))
 
-    # overlay_frame = ttk.Frame(app, bootstyle="primary", padding=10)
+    # overlay_frame = ttk.Frame(frame_taskpage bootstyle="primary", padding=10)
 
-    frame_tasks = ttk.Frame(app, bootstyle="light")
+    frame_tasks = ttk.Frame(frame_taskpage, bootstyle="light")
     frame_tasks.pack(fill="both", expand=True)
-
-    frame_pages = ttk.Frame(app, padding=5)
-    # frame_pages.pack(padx=0, pady=0, anchor="center")
-    frame_pages.pack(padx=0, pady=0)
-
-
-    frame_button = ttk.Frame(app, bootstyle="primary", padding=0, height=100)
-    frame_button.pack(fill="x", padx=10, pady=(0, 10), side="bottom")
 
     # ==============================================
     # Section 4: Button Functions and Creation
@@ -139,7 +127,7 @@ def create_tasks_page(app):
         frame_button.pack_forget()
         frame_pages.pack_forget()
 
-        frame_task_form = ttk.Frame(app, bootstyle="light")
+        frame_task_form = ttk.Frame(frame_task, bootstyle="light")
         frame_task_form.pack(fill="both", expand=True)
 
     # ----------------------------------------------
@@ -448,62 +436,6 @@ def create_tasks_page(app):
         create_generic_frame(frame_current_tasks)
 
     # ==============================================
-    # Section 10: Page Navigation Radio Buttons
-    # ==============================================
-
-    # The pages buttons
-    # Radio buttons
-    radio_value = StringVar(value="2")
-
-    radio_button_1 = ctk.CTkRadioButton(
-        master=frame_pages,
-        text="",
-        radiobutton_width=8,
-        radiobutton_height=8,
-        variable=radio_value,
-        value="1",
-        border_width_unchecked=4,
-        border_width_checked=4,
-        border_color="#D9D9D9",
-        fg_color="#DC7373",
-        width=0,
-        hover=False
-    )
-    radio_button_1.pack(side="left", padx=0)
-
-    radio_button_2 = ctk.CTkRadioButton(
-        master=frame_pages,
-        text="",
-        radiobutton_width=8,
-        radiobutton_height=8,
-        variable=radio_value,
-        value="2",
-        border_width_unchecked=4,
-        border_width_checked=4,
-        border_color="#D9D9D9",
-        fg_color="#DC7373",
-        width=0,
-        hover=False
-    )
-    radio_button_2.pack(side="left", padx=0)
-
-    radio_button_3 = ctk.CTkRadioButton(
-        master=frame_pages,
-        text="",
-        radiobutton_width=8,
-        radiobutton_height=8,
-        variable=radio_value,
-        value="3",
-        border_width_unchecked=4,
-        border_width_checked=4,
-        border_color="#D9D9D9",
-        fg_color="#DC7373",
-        width=0,
-        hover=False
-    )
-    radio_button_3.pack(side="left", padx=0)
-
-    # ==============================================
     # Section 11: Add Task Button
     # ==============================================
 
@@ -516,16 +448,11 @@ def create_tasks_page(app):
         command=show_task_form, 
         fg_color="#DC7373",
         hover_color="#c4524e",
-        width=340,
+        width=360,
         height=55,
         corner_radius=20,
         font=("Helvetica", 16),
     )
     task_button.pack(side="bottom", anchor="s", pady=(0, 10))
 
-# ==============================================
-# Testing
-# ==============================================
-
-# create_tasks_page(app)
-# app.mainloop()
+    return frame_taskpage
