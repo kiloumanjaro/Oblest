@@ -121,27 +121,35 @@ button_right.pack(side="right", padx=0, anchor="e")
 # Section 5: Task Form Functions and Creation
 # ==============================================
 
-# Shows the task form once the "Add Task" button is clicked
+# ----------------------------------------------
+# 5.1: Main Form Display Function
+# ----------------------------------------------
 def show_task_form():
-    frame_tasks.pack_forget()  # Hide the main tasks frame
+    frame_tasks.pack_forget()
     frame_button.pack_forget()
     frame_pages.pack_forget()
 
-    # Create task form frame
     frame_task_form = ttk.Frame(app, bootstyle="light")
     frame_task_form.pack(fill="both", expand=True)
 
-    # Task Title
+# ----------------------------------------------
+# 5.2: Form Field Creation
+# ----------------------------------------------
+    # Task Title Field
     ttk.Label(frame_task_form, text="Task Title:").pack(pady=10)
     task_title_entry = ttk.Entry(frame_task_form, width=50)
     task_title_entry.pack(pady=10)
 
-    # Deadline Date / Using Calendar
+    # Deadline Date Field
     ttk.Label(frame_task_form, text="Deadline Date:").pack(pady=10)
-    deadline_date_entry = ttk.DateEntry(master=frame_task_form, bootstyle="danger", dateformat="%Y-%m-%d",)
+    deadline_date_entry = ttk.DateEntry(
+        master=frame_task_form, 
+        bootstyle="danger", 
+        dateformat="%Y-%m-%d"
+    )
     deadline_date_entry.pack(pady=10)
 
-    # Course List
+    # Course Selection Field
     ttk.Label(frame_task_form, text="Course:", font=('Helvetica', 14, 'bold')).pack(pady=10)
     courses = ["General", "Course 1", "Course 2", "Course 3"]
     course_var = tk.StringVar()
@@ -163,12 +171,14 @@ def show_task_form():
         course_dropdown.option_add(value=course, pattern=f"{course}")
     course_dropdown.pack(pady=10)
 
-    # Content
+    # Content Field
     ttk.Label(frame_task_form, text="Content:").pack(pady=10)
     content_text = scrolledtext.ScrolledText(frame_task_form, width=50, height=10)
     content_text.pack(pady=10)
 
-    # Submit and Cancel Buttons
+# ----------------------------------------------
+# 5.3: Form Action Functions
+# ----------------------------------------------
     def submit_task_form():
         task_title = task_title_entry.get()
         deadline_date = deadline_date_entry.entry.get()
@@ -179,7 +189,10 @@ def show_task_form():
         try:
             datetime.strptime(deadline_date, "%Y-%m-%d")
         except ValueError:
-            simpledialog.messagebox.showerror("Invalid Date", f"Please enter a valid date in the format YYYY-MM-DD: {deadline_date}")
+            simpledialog.messagebox.showerror(
+                "Invalid Date", 
+                f"Please enter a valid date in the format YYYY-MM-DD: {deadline_date}"
+            )
             return
 
         # Output data
@@ -188,25 +201,28 @@ def show_task_form():
         print("Course:", course)
         print("Content:", content)
 
-        frame_task_form.pack_forget()  # Hide task form
-        frame_tasks.pack(fill="both", expand=True)  # Show main tasks frame again
+        frame_task_form.pack_forget()
+        frame_tasks.pack(fill="both", expand=True)
 
     def hide_task_form():
-        frame_task_form.pack_forget()  # Hide task form
-        frame_tasks.pack(fill="both", expand=True)  # Show main tasks frame again
+        frame_task_form.pack_forget()
+        frame_tasks.pack(fill="both", expand=True)
         frame_pages.pack(padx=0, pady=0, anchor="center")
         frame_button.pack(fill="x", padx=10, pady=(0, 10), side="bottom")
 
-    # Framed Submit and Cancel Buttons
+# ----------------------------------------------
+# 5.4: Button Creation and Layout
+# ----------------------------------------------
     button_frame = ctk.CTkFrame(
         master=frame_task_form,
         fg_color="#f8f9fa",
-        )
+    )
     button_frame.pack(pady=10)
 
     ctk.CTkButton(
         master=button_frame, 
-        text="Submit", font=('Helvetica', 14),
+        text="Submit", 
+        font=('Helvetica', 14),
         text_color="white", 
         command=submit_task_form,
         corner_radius=20,
@@ -224,7 +240,7 @@ def show_task_form():
         fg_color="#cf5b58",
         hover_color="#c4524e"
     ).pack(side="left", padx=10)
-
+    
 # ==============================================
 # Section 6: Task Count Display
 # ==============================================
