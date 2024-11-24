@@ -3,6 +3,7 @@
 # ==============================================
 
 from pathlib import Path
+from TaskNode import TaskStatus, Task, Node
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
@@ -371,16 +372,23 @@ frame_current_tasks.pack(pady=(0, 5), padx=(10, 10), fill=BOTH, side="bottom", e
 # Section 9: Task Nodes and Frame Creation
 # ==============================================
 
-# NODES: To contain the information of each task
-
-# Assuming you have a list of nodes with title, content, and course
-nodes = [
-    {"title": "Node 1", "content": "This is the content of Node 1", "course": "Course 1"},
-    {"title": "Node 2", "content": "This is the content of Node 2", "course": "Course 2"},
-    # Add more nodes here...
+# ----------------------------------------------
+# 9.1: Sample Data and Node Creation
+# ----------------------------------------------
+# Sample task list creation
+tasks = [
+    Task(1, "Task 1", 5, [], "Task 1 content", "Course 1", 3, "2022-01-01", deadline="2022-01-15"),
+    Task(2, "Task 2", 3, [], "Task 2 content", "Course 2", 2, "2022-01-05"),
+    Task(3, "Task 3", 8, [], "Task 3 content", "Course 3", 4, "2022-01-10", deadline="2022-01-20"),
+    Task(4, "Task 4", 6, [], "Task 4 content", "Course 4", 3, "2022-01-15", deadline="2022-01-25"),
 ]
 
-# Function to create a generic frame
+# Node list generation from tasks
+nodes = [Node(task, 1) for task in tasks]
+
+# ----------------------------------------------
+# 9.2: Generic Frame Generation
+# ----------------------------------------------
 def create_generic_frame(master):
     generic_task = ctk.CTkFrame(
         master=master,
@@ -390,7 +398,6 @@ def create_generic_frame(master):
     )
     generic_task.pack(pady=(8, 8), padx=(5, 5), fill=X, side="top", expand=YES)
     
-    # Add a label to the generic frame
     ctk.CTkLabel(
         master=generic_task,
         text="No tasks available",
@@ -398,39 +405,48 @@ def create_generic_frame(master):
         font=("Arial", 16)
     ).pack(pady=(20, 20), padx=(20, 20))
 
-# Function to create a frame with node data
+# ----------------------------------------------
+# 9.3: Node Frame Generation
+# ----------------------------------------------
 def create_node_frame(master, node):
+    course_color = {
+        "Course 1": "#FFC080",  # Orange
+        "Course 2": "#C5CAE9",  # Blue
+        # Add more course colors as needed
+    }
+
     node_task = ctk.CTkFrame(
         master=master,
-        bg_color="white",
+        fg_color=course_color.get(node.task.course_tag, "white"),
         corner_radius=40,
         height=105
     )
-    node_task.pack(pady=(8, 8), padx=(5, 5), fill=X, side="top", expand=YES)
-    
-    # Add labels to the node frame
+    node_task.pack(pady=(8, 8), padx=(5, 5), fill=tk.X, side="top", expand=tk.YES)
+
     ctk.CTkLabel(
         master=node_task,
-        text=node["title"],
+        text=node.task.name,
         text_color="black",
         font=("Arial", 16)
     ).pack(pady=(10, 5), padx=(20, 20))
-    
+
     ctk.CTkLabel(
         master=node_task,
-        text=node["content"],
-        text_color="gray",
-        font=("Arial", 14)
-    ).pack(pady=(0, 10), padx=(20, 20))
-    
-    ctk.CTkLabel(
-        master=node_task,
-        text=node["course"],
+        text=node.task.text_content,
         text_color="gray",
         font=("Arial", 14)
     ).pack(pady=(0, 10), padx=(20, 20))
 
-# Create frames based on the nodes list
+    ctk.CTkLabel(
+        master=node_task,
+        text=node.task.course_tag,
+        text_color="gray",
+        font=("Arial", 14)
+    ).pack(pady=(0, 10), padx=(20, 20))
+
+# ----------------------------------------------
+# 9.4: Frame Creation Logic
+# ----------------------------------------------
 if nodes:
     for node in nodes:
         create_node_frame(frame_current_tasks, node)
