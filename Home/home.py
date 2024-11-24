@@ -64,7 +64,7 @@ def create_home_page(app):
     overlay_frame = ttk.Frame(frame_home, bootstyle="primary", padding=10)
 
     frame_button = ttk.Frame(frame_home, bootstyle="primary", padding=0)
-    frame_button.pack(fill="x", padx=10, pady=(0, 10), side="bottom")
+    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
 
     # Meter
     meter = ttk.Meter(

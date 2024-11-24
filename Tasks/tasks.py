@@ -24,19 +24,17 @@ def relative_to_assets(path: str) -> Path:
 # Section 2: Window Initialization
 # ==============================================
 
-# Create the application window
-app = ttk.Window(themename="custom")  # Change theme if needed
-app.geometry("480x820")  # Width x Height in pixels
-app.title("Tasks Page")
+    frame_taskpage = ttk.Frame(app, bootstyle="primary")
+    is_overlay_shown = False  # Flag to track overlay visibility
 
-# Variables
-# totaldays = 203
-# dayspassed = 90
-# rank = "diamond"
-# rankpts = 78 
-is_overlay_shown = False  # Flag to track overlay visibility
-left_button_state = BooleanVar(value=False)
-right_button_state = BooleanVar(value=False)
+    frame_controls = ttk.Frame(frame_taskpage, padding=0)
+    frame_controls.pack(fill="x", padx=10, pady=(10, 5))
+
+    frame_button = ttk.Frame(frame_taskpage, bootstyle="primary", padding=0)
+    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
+
+    left_button_state = BooleanVar(value=False)
+    right_button_state = BooleanVar(value=False)
 
 # Load icons
 right_icon = PhotoImage(file=str(relative_to_assets("right_icon.png")))
