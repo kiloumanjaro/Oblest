@@ -3,7 +3,7 @@
 # ==============================================
 
 from pathlib import Path
-from TaskNode import TaskStatus, Task, Node
+from TaskManager import TaskStatus, Task, Node
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
