@@ -1,30 +1,98 @@
-import tkinter as tk
+from pathlib import Path
 import ttkbootstrap as ttk
-from Home.home import HomePage
-from Productivity.productivity import ProductivityPage
-from Tasks.tasks import TaskPage
+import customtkinter as ctk
+from tkinter import StringVar
 
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Oblest Application")
-        self.geometry("480x820")
-        self.pages = {}
-        self.current_page = None
-        self.show_page(HomePage)
+# Paths
+OUTPUT_PATH = Path(__file__).parent
 
-    def show_page(self, page_class):
-        """Switches to a given page."""
-        # Destroy the current page if it exists
-        if self.current_page is not None:
-            self.current_page.destroy()
-        
-        # Initialize and display the new page
-        page = page_class(self)
-        self.pages[page_class] = page
-        self.current_page = page
-        page.pack(fill="both", expand=True)
+# Import page creation functions
+from Home.home import create_home_page
+from Productivity.productivity import create_productivity_page
+from Tasks.tasks import create_tasks_page
 
-if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+# Create the application window
+app = ttk.Window(themename="custom")  # Using ttkbootstrap for theming
+app.geometry("480x820")  # Width x Height in pixels
+app.title("Progress Tracker")
+
+# Variables
+radio_value = StringVar(value="2")  # Default selected page
+
+# Dictionary to store frames for each page
+frames = {}
+
+# Create pages and add them to the frames dictionary
+frames["1"] = create_tasks_page(app)
+frames["2"] = create_home_page(app)
+frames["3"] = create_productivity_page(app)
+
+
+# Function to switch pages
+def show_page(page_number):
+    """Switches to the selected page by hiding others."""
+    for frame in frames.values():
+        frame.pack_forget()
+    frames[page_number].pack(fill="both", expand=True)
+
+# Create the navigation frame
+frame_pages = ttk.Frame(app, padding=0)
+frame_pages.place(relx=0.5, y=690, anchor="center", height=50)
+
+# Create styled radio buttons
+radio_button_1 = ctk.CTkRadioButton(
+    master=frame_pages,
+    text="",
+    radiobutton_width=8,
+    radiobutton_height=8,
+    variable=radio_value,
+    value="1",
+    border_width_unchecked=4,
+    border_width_checked=4,
+    border_color="#D9D9D9",
+    fg_color="#DC7373",
+    hover=False,
+    width=0,
+    command=lambda: show_page("1")
+)
+radio_button_1.pack(side="left", padx=0)  # Add space between buttons
+
+radio_button_2 = ctk.CTkRadioButton(
+    master=frame_pages,
+    text="",
+    radiobutton_width=8,
+    radiobutton_height=8,
+    variable=radio_value,
+    value="2",
+    border_width_unchecked=4,
+    border_width_checked=4,
+    border_color="#D9D9D9",
+    fg_color="#DC7373",
+    hover=False,
+    width=0,
+    command=lambda: show_page("2")
+)
+radio_button_2.pack(side="left", padx=0)
+
+radio_button_3 = ctk.CTkRadioButton(
+    master=frame_pages,
+    text="",
+    radiobutton_width=8,
+    radiobutton_height=8,
+    variable=radio_value,
+    value="3",
+    border_width_unchecked=4,
+    border_width_checked=4,
+    border_color="#D9D9D9",
+    fg_color="#DC7373",
+    hover=False,
+    width=0,
+    command=lambda: show_page("3")
+)
+radio_button_3.pack(side="left", padx=0)
+
+# Show the initial page (Home)
+show_page("2")
+
+# Start the application
+app.mainloop()
