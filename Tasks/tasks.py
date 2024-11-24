@@ -39,7 +39,7 @@ def create_tasks_page(app):
     frame_controls.pack(fill="x", padx=10, pady=(10, 5))
 
     frame_button = ttk.Frame(frame_taskpage, bootstyle="primary", padding=0)
-    frame_button.pack(fill="x", padx=10, pady=(0, 10), side="bottom")
+    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
 
     left_button_state = BooleanVar(value=False)
     right_button_state = BooleanVar(value=False)
