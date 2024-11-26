@@ -43,42 +43,45 @@ def create_home_page(app):
     frame_home = ttk.Frame(app)
     frame_home.pack(fill="both", expand=True)  # Ensure frame_home expands
 
-    frame_controls = ttk.Frame(frame_home, padding=0)
-    frame_controls.pack(fill="x", padx=10, pady=(10, 5))
+    screen_width = app.winfo_screenwidth()
+    screen_height = app.winfo_screenheight()
 
-    frame_text = ttk.Frame(frame_home, bootstyle="primary", padding=10)
-    frame_text.pack(fill="x", padx=10, pady=5)
+    frame_controls = ttk.Frame(frame_home, bootstyle="primary", padding=0)
+    frame_controls.pack(fill="x", padx=int(screen_height*0.0093), pady=(int(screen_height*0.0093), int(screen_height*0.0046)))
 
-    frame_circle = ttk.Frame(frame_home, bootstyle="primary", padding=10)
-    frame_circle.pack(fill="x", padx=10, pady=10)
+    frame_text = ttk.Frame(frame_home, bootstyle="primary", padding=int(screen_height*0.0093))
+    frame_text.pack(fill="x", padx=int(screen_height*0.0093), pady=int(screen_height*0.0046))
 
-    frame_days = ttk.Frame(frame_home, bootstyle="primary", padding=5)
-    frame_days.pack(fill="x", padx=10, pady=0, anchor="center")
+    frame_circle = ttk.Frame(frame_home, bootstyle="primary", padding=int(screen_height*0.0148))
+    frame_circle.pack(fill="x", padx=int(screen_height*0.0093), pady=(int(screen_height*0.0093), int(screen_height*0.0019)))
 
-    frame_progress = ttk.Frame(frame_home, bootstyle="primary", padding=5)
-    frame_progress.pack(fill="x", padx=10, pady=0, anchor="center")
+    frame_days = ttk.Frame(frame_home, bootstyle="primary", padding=int(screen_height*0.0093))
+    frame_days.pack(fill="x", padx=int(screen_height*0.0093), pady=0, anchor="center")
+
+    frame_progress = ttk.Frame(frame_home, bootstyle="primary", padding=(int(screen_height*0.0093), 0))
+    frame_progress.pack(fill="x", padx=int(screen_height*0.0093), pady=0, anchor="center")
 
     frame_pages = ttk.Frame(frame_home, padding=5)  # Added definition for frame_pages
-    frame_pages.pack(fill="x", padx=10, pady=10)
+    frame_pages.pack(fill="x", padx=int(screen_height*0.0093), pady=int(screen_height*0.0093))
 
-    overlay_frame = ttk.Frame(frame_home, bootstyle="primary", padding=10)
+    overlay_frame = ttk.Frame(frame_home, bootstyle="primary", padding=int(screen_height*0.0093))
 
     frame_button = ttk.Frame(frame_home, bootstyle="primary", padding=0)
-    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
+    frame_button.pack(fill="x", padx=int(screen_height*0.0093), pady=(0, int(screen_height*0.0046)), side="bottom")
 
     # Meter
     meter = ttk.Meter(
         frame_circle,
-        metersize=260,
-        meterthickness=30,
+        metersize=int(screen_height * 0.2454),
+        meterthickness=int(screen_height * 0.0278),
         padding=0,
         amountused=int((dayspassed / totaldays) * 100),
         metertype="full",
         interactive=True,
-        textfont=['Helvetica', 40, 'normal']
+        textfont=['Helvetica', int(screen_height * 0.0370), 'normal']
     )
     meter.configure(bootstyle="danger")
-    meter.pack(pady=20)
+    meter.pack(pady=int(screen_height * 0.0185))
 
     is_overlay_shown = False
 
@@ -86,7 +89,7 @@ def create_home_page(app):
     label_1 = ttk.Label(
         frame_days,
         text=f"{totaldays} Days",
-        font=("Helvetica", 12),
+        font=("Helvetica", int(screen_height * 0.0111)),
         bootstyle="fg"
     )
     label_1.pack(side="left", pady=0, anchor="w")
@@ -94,16 +97,16 @@ def create_home_page(app):
     label_2 = ttk.Label(
         frame_days,
         text=f"Remaining: {dayspassed}",
-        font=("Helvetica", 12),
+        font=("Helvetica", int(screen_height * 0.0111)),
         bootstyle="fg"
     )
     label_2.pack(side="right", pady=0, anchor="e")
 
     progress_bar = ctk.CTkProgressBar(
         master=frame_progress,
-        width=360,
-        height=20,
-        corner_radius=10,
+        width=int(screen_width * 0.1875),
+        height=int(screen_height * 0.0139),
+        corner_radius=int(screen_height * 0.0093),
         progress_color="#DC7373",
         fg_color="#f7f7f7",
     )
@@ -121,17 +124,17 @@ def create_home_page(app):
             is_overlay_shown = False
             meter.configure(amountused=int((dayspassed / totaldays) * 100))
         else:
-            overlay_frame.place(x=165, y=327, width=150, height=120)
+            overlay_frame.place(x=int(screen_height * 0.1528), y=int(screen_height * 0.3028), width=int(screen_height * 0.1389), height=int(screen_height * 0.1111))
             overlay_frame.tkraise()
 
             # Update overlay label based on rank
             overlay_label = ttk.Label(
                 overlay_frame,
                 text="Cu",
-                font=("Helvetica", 37),
+                font=("Helvetica", int(screen_height * 0.0343)),
                 bootstyle="dark"
             )
-            overlay_label.pack(pady=10)
+            overlay_label.pack(pady=int(screen_height * 0.0093))
 
             if rank == "copper":
                 overlay_label.config(text="Cu", bootstyle="dark")
@@ -185,7 +188,7 @@ def create_home_page(app):
         image=right_icon,
         command=toggle_right_button,
         bootstyle="primary, link",
-        width=5
+        width=int(screen_height * 0.0046)
     )
     button_right.pack(side="right", padx=0, anchor="e")
 
@@ -194,7 +197,7 @@ def create_home_page(app):
     motivation = ttk.Label(
         frame_text,
         text=motivation_text,
-        font=("Helvetica", 22, "bold"),
+        font=("Helvetica", int(screen_height * 0.0204), "bold"),
         bootstyle="fg"
     )
     motivation.pack(side="top", pady=0, anchor="w")
@@ -203,10 +206,10 @@ def create_home_page(app):
     date = ttk.Label(
         frame_text,
         text=current_date,
-        font=("Helvetica", 11),
+        font=("Helvetica", int(screen_height * 0.0102)),
         bootstyle="secondary"
     )
-    date.pack(side="top", pady=5, anchor="w")
+    date.pack(side="top", pady=int(screen_height * 0.0046), anchor="w")
 
     # Set Goals button
     button_1 = ctk.CTkButton(
@@ -216,12 +219,12 @@ def create_home_page(app):
         command=lambda: print("Set Goals button clicked"),
         fg_color="#DC7373",
         hover_color="#c4524e",
-        width=360,
-        height=55,
-        corner_radius=20,
-        font=("Helvetica", 16),
+        width=int(screen_height * 0.3333),
+        height=int(screen_height * 0.0519),
+        corner_radius=int(screen_height * 0.0185),
+        font=("Helvetica", int(screen_height * 0.0148)),
     )
-    button_1.pack(side="bottom", anchor="s", pady=10)
+    button_1.pack(side="bottom", anchor="s", pady=int(screen_height * 0.0093))
 
 
     return frame_home

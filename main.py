@@ -16,6 +16,8 @@ app = ttk.Window(themename="custom")  # Using ttkbootstrap for theming
 app.geometry("480x820")  # Width x Height in pixels
 app.title("Progress Tracker")
 
+screen_height = app.winfo_screenheight()
+
 # Variables
 radio_value = StringVar(value="2")  # Default selected page
 
@@ -36,19 +38,21 @@ def show_page(page_number):
     frames[page_number].pack(fill="both", expand=True)
 
 # Create the navigation frame
-frame_pages = ttk.Frame(app, padding=0)
-frame_pages.place(relx=0.5, y=690, anchor="center", height=50)
+frame_pages = ttk.Frame(app, padding=0, bootstyle="secondary")
+frame_pages.place(relx=0.5, y=int(screen_height*0.6593), anchor="center", height=int(screen_height*0.0185))
+
+
 
 # Create styled radio buttons
 radio_button_1 = ctk.CTkRadioButton(
     master=frame_pages,
     text="",
-    radiobutton_width=8,
-    radiobutton_height=8,
+    radiobutton_width=int(screen_height*0.0083),
+    radiobutton_height=int(screen_height*0.0083),
     variable=radio_value,
     value="1",
-    border_width_unchecked=4,
-    border_width_checked=4,
+    border_width_unchecked=int(screen_height*0.0037),
+    border_width_checked=int(screen_height*0.0037),
     border_color="#D9D9D9",
     fg_color="#DC7373",
     hover=False,
@@ -57,15 +61,16 @@ radio_button_1 = ctk.CTkRadioButton(
 )
 radio_button_1.pack(side="left", padx=0)  # Add space between buttons
 
+
 radio_button_2 = ctk.CTkRadioButton(
     master=frame_pages,
     text="",
-    radiobutton_width=8,
-    radiobutton_height=8,
+    radiobutton_width=int(screen_height*0.0083),
+    radiobutton_height=int(screen_height*0.0083),
     variable=radio_value,
     value="2",
-    border_width_unchecked=4,
-    border_width_checked=4,
+    border_width_unchecked=int(screen_height*0.0037),
+    border_width_checked=int(screen_height*0.0037),
     border_color="#D9D9D9",
     fg_color="#DC7373",
     hover=False,
@@ -77,12 +82,12 @@ radio_button_2.pack(side="left", padx=0)
 radio_button_3 = ctk.CTkRadioButton(
     master=frame_pages,
     text="",
-    radiobutton_width=8,
-    radiobutton_height=8,
+    radiobutton_width=int(screen_height*0.0083),
+    radiobutton_height=int(screen_height*0.0083),
     variable=radio_value,
     value="3",
-    border_width_unchecked=4,
-    border_width_checked=4,
+    border_width_unchecked=int(screen_height*0.0037),
+    border_width_checked=int(screen_height*0.0037),
     border_color="#D9D9D9",
     fg_color="#DC7373",
     hover=False,
