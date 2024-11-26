@@ -125,9 +125,9 @@ def create_tasks_page(app):
     def show_task_form():
         frame_tasks.pack_forget()
         frame_button.pack_forget()
-        frame_pages.pack_forget()
+        # frame_pages.pack_forget() These were mlst likely the old radio buttons
 
-        frame_task_form = ttk.Frame(frame_task, bootstyle="light")
+        frame_task_form = ttk.Frame(app, bootstyle="light")
         frame_task_form.pack(fill="both", expand=True)
 
     # ----------------------------------------------
@@ -205,7 +205,7 @@ def create_tasks_page(app):
         def hide_task_form():
             frame_task_form.pack_forget()
             frame_tasks.pack(fill="both", expand=True)
-            frame_pages.pack(padx=0, pady=0, anchor="center")
+            # frame_pages.pack(padx=0, pady=0, anchor="center")
             frame_button.pack(fill="x", padx=10, pady=(0, 10), side="bottom")
 
     # ----------------------------------------------
@@ -429,6 +429,7 @@ def create_tasks_page(app):
     # ----------------------------------------------
     # 9.4: Frame Creation Logic
     # ----------------------------------------------
+    
     if nodes:
         for node in nodes:
             create_node_frame(frame_current_tasks, node)
