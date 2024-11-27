@@ -159,7 +159,10 @@ def create_tasks_page(app):
 
         # Course Selection Field
         ttk.Label(frame_task_form, text="Course:", font=('Helvetica', 14, 'bold')).pack(pady=10)
+        
+        # This shall be obtained from a look through the existing folder lists and taking the names of the folders
         courses = ["General", "Course 1", "Course 2", "Course 3"]
+        
         course_var = tk.StringVar()
         course_var.set(courses[0])
         course_dropdown = ctk.CTkComboBox(
@@ -282,7 +285,11 @@ def create_tasks_page(app):
     # Create task count number
     Tasks_Completed = ctk.CTkLabel(
         master=Tasks_Completed_Frame,
-        # text=f"{somenumberhere}";  # Replace with actual number
+
+        # Will Utilize the totals obtained from each Course Skipl List
+        ###########################################################
+        # text=f"{somenumberhere}";  # Replace with actual number #
+        ###########################################################
         text="234",  # Replace with actual number
         bg_color="transparent",  # Background color
         fg_color="#ffffff",  # Foreground color
