@@ -42,7 +42,6 @@ frame_pages = ttk.Frame(app, padding=0, bootstyle="secondary")
 frame_pages.place(relx=0.5, y=int(screen_height*0.6593), anchor="center", height=int(screen_height*0.0185))
 
 
-
 # Create styled radio buttons
 radio_button_1 = ctk.CTkRadioButton(
     master=frame_pages,
