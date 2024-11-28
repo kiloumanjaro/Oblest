@@ -17,61 +17,66 @@ class Task:
     id: int
     name: str
     priority: float
-    reminders: List[str]
+    # reminders: List[str]
     text_content: str
     course_tag: str
-    difficulty_rating: int
-    initial_date: str
-    deadline: Optional[str] = None
-    dependencies: List[int] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
-    notes: List[str] = field(default_factory=list)
-    status: TaskStatus = TaskStatus.NOT_DONE
+    initial_date: datetime
 
+    deadline: Optional[datetime] = None
+    status: TaskStatus = TaskStatus.NOT_DONE
+    difficulty_rating: int = 1 # Default difficulty rating
+    
     def calculate_priority(self, current_date: date = None) -> float:
-        """Calculate task priority based on difficulty and deadline proximity"""
         if current_date is None:
             current_date = date.today()
         
-        # Base priority from difficulty (1-5 scale)
         priority = self.difficulty_rating * 2
         
-        # Add deadline factor if deadline exists
         if self.deadline:
-            deadline_date = datetime.strptime(self.deadline, '%Y-%m-%d').date()
-            days_until_deadline = (deadline_date - current_date).days
+            days_until_deadline = (self.deadline.date() - current_date).days
             
             if days_until_deadline <= 0:
-                # Past deadline tasks get very high priority
                 priority += 10
                 self.status = TaskStatus.LATE
             else:
-                # Exponentially increase priority as deadline approaches
                 deadline_factor = 10 / (1 + math.exp(days_until_deadline / 7))
                 priority += deadline_factor
         
         self.priority = priority
         return priority
 
+    # Both functions facilitate serialization for YAML
+    # Do Not Touch Unless You Know What You're Doing
     def to_dict(self) -> dict:
         """Convert Task to dictionary for serialization"""
         data = asdict(self)
         data['status'] = self.status.value
+        data['initial_date'] = self.initial_date.strftime('%Y-%m-%d')
+        data['deadline'] = self.deadline.strftime('%Y-%m-%d') if self.deadline else None
         return data
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Task':
         """Create Task from dictionary representation"""
-        # Convert status string to enum
-        data['status'] = TaskStatus(data['status'])
+        data['status'] = TaskStatus(data.get('status', TaskStatus.NOT_DONE.value))
+        data['initial_date'] = datetime.strptime(data['initial_date'], '%Y-%m-%d')
+        data['deadline'] = datetime.strptime(data['deadline'], '%Y-%m-%d') if data.get('deadline') else None
+        
+        required_fields = ['id', 'name', 'text_content', 'course_tag', 'initial_date']
+        for field_name in required_fields:
+            if field_name not in data:
+                raise ValueError(f"Missing required field: {field_name}")
+            
         return cls(**data)
 
+# Just a node in the skip list that has a task
 class Node:
     def __init__(self, task: Task, height: int):
         self.task = task
         self.height = height
         self.forward = [None] * height
         self.backward = None
+
 
 class SkipList:
     def __init__(self, max_level: int = 16):
@@ -89,18 +94,20 @@ class SkipList:
             level += 1
         return level
 
-    def update_task_priority(self, task: Task) -> None:
-        """Update task priority without removing and reinserting"""
-        x = self.header
-        for i in range(self.level - 1, -1, -1):
-            while x.forward[i] and x.forward[i].task.id < task.id:
-                x = x.forward[i]
-            if x.forward[i] and x.forward[i].task.id == task.id:
-                x.forward[i].task = task
-                return
+    # def update_task_priority(self, task: Task) -> None:
+    #     """Update task priority without removing and reinserting"""
+    #     x = self.header
+    #     for i in range(self.level - 1, -1, -1):
+    #         while x.forward[i] and x.forward[i].task.id < task.id:
+    #             x = x.forward[i]
+    #         if x.forward[i] and x.forward[i].task.id == task.id:
+    #             x.forward[i].task = task
+    #             return
 
     def insert(self, task: Task) -> None:
         """Insert a task into the skip list"""
+        if self.search(task.id):
+            raise ValueError(f"Task with ID {task.id} already exists.")
         new_level = self.random_level()
         if new_level > self.level:
             self.level = new_level
@@ -111,7 +118,7 @@ class SkipList:
 
         # Find proper position for new node
         for i in range(self.level - 1, -1, -1):
-            while x.forward[i] and x.forward[i].task.priority < task.priority:
+            while x.forward[i] and x.forward[i].task.id < task.id:
                 x = x.forward[i]
             update[i] = x
 
@@ -151,9 +158,11 @@ class SkipList:
         for i in range(self.level - 1, -1, -1):
             while x.forward[i] and x.forward[i].task.id < task_id:
                 x = x.forward[i]
-            if x.forward[i] and x.forward[i].task.id == task_id:
-                return x.forward[i].task
+        x = x.forward[0]
+        if x and x.task.id == task_id:
+            return x.task
         return None
+
 
 class CourseManager:
     """Handles operations for a single course's task list"""
@@ -185,6 +194,11 @@ class CourseManager:
         with open(self.storage_path, 'w') as f:
             yaml.dump(tasks, f)
 
+    ###########################
+    # TASK SPECIFIC FUNCTIONS #
+    ###########################
+
+    # Should only be one single insertion, as multiple task insertion is not a thing
     def update_priorities(self, current_date: date) -> None:
         """Update priorities of all tasks"""
         current = self.skip_list.header.forward[0]
@@ -192,20 +206,23 @@ class CourseManager:
             current.task.calculate_priority(current_date)
             current = current.forward[0]
             
-    # Should only be one single insertion, as multiple task insertion is not a thing
+    # Some function here to update a task
+    def update_task(self, updated_task: Task) -> None:  # Pass the whole Task object
+        """Updates an existing task in the skip list."""
+        old_task = self.skip_list.search(updated_task.id)
+        if old_task:
+            self.skip_list.remove(updated_task.id)
+            # Check if priority-relevant fields have changed. If they do, recalculate priority
+            if old_task.deadline != updated_task.deadline or old_task.difficulty_rating != updated_task.difficulty_rating: 
+                updated_task.calculate_priority()
+            self.skip_list.insert(updated_task)
+            self.save()
+        else:
+            raise ValueError(f"Task with ID {updated_task.id} not found.")
+    
     def insert_task(self, task: Task) -> None:
         self.skip_list.insert(task)
         self.save()
-    
-    # Some function here to update a task
-    def update_task(self, updated_task: Task, task_id: int) -> None:
-        """Updates an existing task in the skip list."""
-        node = self.skip_list.search(task_id)  # Assuming SkipList has a search method by task_id.
-        if node: # This is more or less an overwrite instead of a 'change whatever's changed' 
-            node = updated_task # Update the task in place
-            self.save()
-        else:
-            raise ValueError(f"Task with ID {task_id} not found.")  # Or handle the error appropriately
     
     # Some function here to remove a task
     def remove_task(self, task_id: int) -> None:  # Use task_id
@@ -281,47 +298,48 @@ class TaskManager:
                 self.next_task_id = metadata.get('next_task_id', 1) # Default to 1 if not found
                 
     def load_metadata(self) -> None:
-        """Load last update date from metadata file"""
         metadata_path = os.path.join(self.storage_dir, "metadata.yaml")
         if os.path.exists(metadata_path):
             with open(metadata_path, 'r') as f:
-                metadata = yaml.safe_load(f)
-                self.last_update_date = datetime.strptime(
-                    metadata['last_update'], '%Y-%m-%d'
-                ).date()
+                metadata = yaml.safe_load(f) or {}
+                last_update_str = metadata.get('last_update')
+                if last_update_str:
+                    self.last_update_date = datetime.strptime(last_update_str, '%Y-%m-%d').date()
+                else:
+                    self.last_update_date = date.today()
+                self.next_task_id = metadata.get('next_task_id', 1)
+                self.lifetime_tasks = metadata.get('lifetime_tasks', 0)
         else:
             self.last_update_date = date.today()
+            self.next_task_id = 1
+            self.lifetime_tasks = 0
             self.save_metadata()
 
     
     def save_metadata(self) -> None:
         """Save metadata including next task ID."""
-        metadata = {'last_update': self.last_update_date.strftime('%Y-%m-%d'),
-                    'next_task_id': self.next_task_id}
+        metadata = {
+            'last_update': self.last_update_date.strftime('%Y-%m-%d'),
+            'next_task_id': self.next_task_id,
+            'lifetime_tasks': self.lifetime_tasks
+        }
         metadata_path = os.path.join(self.storage_dir, "metadata.yaml")
         with open(metadata_path, 'w') as f:
             yaml.dump(metadata, f)
-            
 
-    def load_courses(self) -> None:
-        """Load all course managers"""
-        for filename in os.listdir(self.storage_dir):
-            if filename.endswith(".yaml") and filename != "metadata.yaml":
-                course_name = filename[:-5]
-                self.courses[course_name] = CourseManager(
-                    course_name, self.storage_dir
-                )
+    def save_all(self) -> None:
+        """Save all courses"""
+        for course in self.courses.values():
+            course.save()
 
     def add_course(self, course_name: str) -> None:
         """Adds a new course."""
         if course_name in self.courses:
             raise ValueError(f"Course '{course_name}' already exists.")
+        if course_name == "":
+            course_name = "general"
         self.courses[course_name] = CourseManager(course_name, self.storage_dir)
         self.save_all()  # Save the new course to disk
-
-    def get_courses(self) -> List[str]:
-        """Returns a list of all course names."""
-        return list(self.courses.keys())
 
     def remove_course(self, course_name: str) -> None:
         """Removes a course and its associated tasks."""
@@ -333,48 +351,18 @@ class TaskManager:
         if os.path.exists(filepath):
             os.remove(filepath)  # Remove from disk
 
-    def update_priorities(self) -> None:
-        """Update priorities for all tasks if necessary"""
-        today = date.today()
-        if self.last_update_date != today:
-            for course in self.courses.values():
-                course.update_priorities(today)
-            self.last_update_date = today
-            self.save_metadata()
-            self.save_all()
+    def get_courses(self) -> List[str]:
+        """Returns a list of all course names."""
+        return list(self.courses.keys())
 
-    def save_all(self) -> None:
-        """Save all courses"""
-        for course in self.courses.values():
-            course.save()
-
-    def move_task(self, task_id: int, from_course: str, to_course: str) -> bool:
-        """Move a task between courses"""
-        if from_course not in self.courses or to_course not in self.courses:
-            return False
-
-        # Find and remove task from source course
-        source = self.courses[from_course].skip_list
-        current = source.header.forward[0]
-        task = None
-        
-        while current:
-            if current.task.id == task_id:
-                task = current.task
-                source.delete(task)
-                break
-            current = current.forward[0]
-
-        if task:
-            # Update course tag and insert into destination course
-            if to_course == "":
-                to_course = "general"
-            task.course_tag = to_course
-            self.courses[to_course].insert_task(task)  # Insert with existing ID
-            self.save_all()
-            return True
-            
-        return False
+    def load_courses(self) -> None:
+        """Load all course managers"""
+        for filename in os.listdir(self.storage_dir):
+            if filename.endswith(".yaml") and filename != "metadata.yaml":
+                course_name = filename[:-5]
+                self.courses[course_name] = CourseManager(
+                    course_name, self.storage_dir
+                )
     
     def generate_task_id(self) -> int:
         """Generate a unique task ID."""
@@ -385,19 +373,47 @@ class TaskManager:
     
     def add_task(self, course_name: str, task_data: dict) -> Task:
         """Adds a task to a course."""
+        if course_name == "":
+            course_name = "general"
+            task_data['course_tag'] = course_name
+        else:
+            task_data['course_tag'] = course_name  # Ensure correct course tag
+            
         if course_name not in self.courses:
             self.courses[course_name] = CourseManager(course_name, self.storage_dir)
 
         task_data['id'] = self.generate_task_id()  # Assign a unique ID
-        if course_name == "":
-            task_data['course_tag'] = "general"
-        else:
-            task_data['course_tag'] = course_name  # Ensure correct course tag
+
+
         task = Task.from_dict(task_data)
         task.calculate_priority()
         self.courses[course_name].insert_task(task)
         self.lifetime_tasks += 1 #increment lifetime tasks by 1.
         return task
+
+    def move_task(self, task_id: int, from_course: str, to_course: str) -> bool:
+        if from_course not in self.courses or to_course not in self.courses:
+            return False
+
+        task = self.courses[from_course].skip_list.search(task_id)
+        if task:
+            self.courses[from_course].remove_task(task_id)
+            task.course_tag = to_course or "general"
+            self.courses[to_course].insert_task(task)
+            self.save_all()
+            return True
+        return False
+
+
+    def update_priorities(self) -> None:
+        """Update priorities for all tasks if necessary"""
+        today = date.today()
+        if self.last_update_date != today:
+            for course in self.courses.values():
+                course.update_priorities(today)
+            self.last_update_date = today
+            self.save_metadata()
+            self.save_all()
     
     # Some function here that to retrieve a list of tasks depending upon the deadline. 
     def get_tasks_by_deadline(self, course_name: str, days: int) -> List[Task]:
@@ -410,12 +426,14 @@ class TaskManager:
         current = self.courses[course_name].skip_list.header.forward[0]
         while current:
             if current.task.deadline:
-                deadline = datetime.strptime(current.task.deadline, '%Y-%m-%d').date()
+                # Use the deadline directly without parsing
+                deadline = current.task.deadline.date()
                 days_until_deadline = (deadline - today).days
                 if 0 <= days_until_deadline <= days:  # Include tasks due today and within 'days'
                     deadline_tasks.append(current.task)
             current = current.forward[0]
         return deadline_tasks
+
     
     # Some Function here that retrieves tasks based on priority.
     def get_tasks_by_priority(self, course_name: str, top_n: int = None) -> List[Task]:
