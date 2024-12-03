@@ -17,11 +17,66 @@ def relative_to_assets(path: str) -> Path:
 global timer_running, timer_end_time
 timer_running = False  # Initial state of the timer
 timer_end_time = 0  # Timer end time
-tasks = ["Task1", "Task2", "Task3"]
-remaining_time = 0
+tasks = ["Task1", "Task2", "Task3", "Task 4"]
+remaining_time = 0 # Initialize running time as zero
 
-def naive_algorithm(input_text, tasks):
-    return [task for task in tasks if task.lower() == input_text.lower()]
+#Key objectives for further improvements:
+    # Make it so that the Task Name Search Bar is locked once the user inputs the timer and presses the Start Timer
+    # Add Stop Timer Button and Reset Timer Button(self-explainatory)
+    # Adding to the Stop and Reset Timer Button, make sure to transform or create a new frame that would display the two buttons
+    # Find alternative solution to maek the oble icon a bit larger(it looks quite small still)
+
+#Function for the creation of the search box
+def create_searchable_combobox(master, task_list):
+    def filter_tasks(event):
+        query = search_entry.get().lower()
+        filtered = [task for task in task_list if query in task.lower()]
+        update_listbox(filtered)
+
+    def update_listbox(filtered_tasks):
+        listbox.delete(0, tk.END)
+        for task in filtered_tasks:
+            listbox.insert(tk.END, task)
+
+        if filtered_tasks:
+            listbox.place(x=search_entry.winfo_x(), y=search_entry.winfo_y() + search_entry.winfo_height() + 5, width=search_entry.winfo_width())
+        else:
+            listbox.place_forget()
+
+    def select_task(event):
+        selected = listbox.get(listbox.curselection())
+        search_entry.delete(0, tk.END)
+        search_entry.insert(0, selected)
+        listbox.place_forget()  # Hide listbox after selection
+
+    def hide_listbox(event=None):
+        listbox.place_forget()  # Hide the listbox when clicking outside or pressing Escape
+
+    # Create a frame for the search bar
+    search_frame = ctk.CTkFrame(master, fg_color="transparent") # Outlline color of the listbox box
+    search_frame.pack(pady=10, fill="x")
+
+    # Search entry (like a search bar)
+    search_entry = ctk.CTkEntry(search_frame, placeholder_text="Search tasks...", font=("Arial", 14))
+    search_entry.pack(pady=5, fill="x")
+    search_entry.bind("<KeyRelease>", filter_tasks)  # Filter tasks as you type
+    search_entry.bind("<FocusOut>", hide_listbox)  # Hide listbox when losing focus
+
+    # Listbox for search results (overlay style)
+    listbox = tk.Listbox(
+        master,
+        height=5,
+        font=("Arial", 12),
+        relief=tk.FLAT,  # No border
+        bg="#f9f9f9",    # Light background
+        fg="black",
+        highlightthickness=1,
+        highlightcolor="gray"
+    )
+    listbox.bind("<<ListboxSelect>>", select_task)
+    listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when it loses focus
+
+    return search_frame
 
 def create_productivity_page(app):
     global timer_running, timer_end_time
@@ -33,11 +88,14 @@ def create_productivity_page(app):
     frame_productivity.pack(fill="both", expand=True, padx=20, pady=20)
 
     # Create a frame for the task input and position it properly
-    task_frame = ctk.CTkFrame(frame_productivity, fg_color="transparent")
-    task_frame.pack(pady=10, fill="x", expand=True)
+    """task_frame = ctk.CTkFrame(frame_productivity, fg_color="transparent")
+    task_frame.pack(pady=10, fill="x", expand=True) """
+
+    # Inside create_productivity_page
+    search_bar = create_searchable_combobox(frame_productivity, tasks)
 
     # Create a smaller rounded entry-like ComboBox
-    task_entry = ctk.CTkComboBox(
+    """task_entry = ctk.CTkComboBox(
         master=task_frame,
         values=tasks,
         corner_radius=20,  # Makes the widget rounded
@@ -49,7 +107,7 @@ def create_productivity_page(app):
         border_color="white",
         state="readonly"
     )
-    task_entry.pack(pady=10, fill="x", expand=True)
+    task_entry.pack(pady=10, fill="x", expand=True) """
 
     # Timer Label
     timer_label = tk.Label(frame_productivity, text="00:00", font=("Arial", 36))
