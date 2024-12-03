@@ -871,8 +871,6 @@ def create_tasks_page(app):
         update_navigation_buttons()  # Update navigation buttons so that it knows what to switch
         if header.winfo_exists():
             header.configure(text=f"{datetime(current_year, current_month, 1):%B %Y}") # refreshes to the current month
-        color_view()
-
 
     def show_week_view():
         global current_view, frame
@@ -882,7 +880,6 @@ def create_tasks_page(app):
         frame.pack(pady=20)
         update_navigation_buttons() 
         update_week_calendar() 
-        color_view()
 
     #so depending on what view we are in, it uses that button
     def update_navigation_buttons():
