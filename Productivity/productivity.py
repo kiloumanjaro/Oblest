@@ -124,26 +124,70 @@ def create_productivity_page(app):
     oble_icon_label.image = oble_icon  # Keep a reference to the image
     oble_icon_label.pack(pady=10, fill="x", expand=True)
 
-    # Start Timer Function
+    def create_custom_dialog(app, on_ok, on_cancel):
+    # Create a new Toplevel window for the dialog
+        dialog = tk.Toplevel(app)
+        dialog.title("Set Timer")
+        dialog.geometry("300x150")
+        dialog.resizable(False, False)
+        dialog.grab_set()  # Make the dialog modal
+
+        # Entry Label
+        label = tk.Label(dialog, text="Enter time in minutes:", font=("Arial", 12))
+        label.pack(pady=10)
+
+        # Timer Input Entry
+        timer_input = tk.Entry(dialog, font=("Arial", 14))
+        timer_input.pack(pady=5)
+
+        # Button Frame
+        button_frame = tk.Frame(dialog)
+        button_frame.pack(pady=10)
+
+        # OK Button
+        def ok_action():
+            input_text = timer_input.get()
+            if input_text.isdigit() and int(input_text) > 0:
+                dialog.destroy()
+                on_ok(int(input_text))
+            else:
+                tk.messagebox.showerror("Invalid Input", "Please enter a valid number of minutes.", parent=dialog)
+
+        ok_button = tk.Button(button_frame, text="OK", command=ok_action, width=10)
+        ok_button.pack(side="left", padx=5)
+
+        # Cancel Button
+        def cancel_action():
+            dialog.destroy()
+            on_cancel()
+
+        cancel_button = tk.Button(button_frame, text="Cancel", command=cancel_action, width=10)
+        cancel_button.pack(side="right", padx=5)
+
+    # Modified Start Timer Function
     def start_timer():
         global timer_running, timer_end_time, remaining_time
         if not timer_running:
             if remaining_time == 0:  # If the timer hasn't started yet
-                # Prompt user for timer input in minutes
-                timer_input = simpledialog.askstring("Input", "Enter the time in minutes:", parent=app)
-                if timer_input and timer_input.isdigit():
-                    timer_duration = int(timer_input) * 60  # Convert minutes to seconds
+                # Custom dialog for timer input
+                def on_ok(minutes):
+                    global timer_end_time, timer_running, remaining_time
+                    timer_duration = minutes * 60  # Convert minutes to seconds
                     timer_end_time = time.time() + timer_duration  # Calculate end time
                     remaining_time = timer_duration
-                else:
-                    simpledialog.messagebox.showerror("Invalid Input", "Please enter a valid number of minutes.")
-                    return
+                    timer_running = True
+                    start_timer_button.configure(text="Pause Timer", fg_color="#c4524e")
+                    update_timer()
+
+                def on_cancel():
+                    pass  # Simply return to the page without doing anything
+
+                create_custom_dialog(app, on_ok, on_cancel)
             else:
                 timer_end_time = time.time() + remaining_time  # Resume from paused time
-
-            timer_running = True
-            start_timer_button.configure(text="Pause Timer", fg_color="#c4524e")
-            update_timer()
+                timer_running = True
+                start_timer_button.configure(text="Pause Timer", fg_color="#c4524e")
+                update_timer()
         else:
             # Pause the timer
             timer_running = False
