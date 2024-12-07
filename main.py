@@ -39,7 +39,7 @@ def show_page(page_number):
 
 # Create the navigation frame
 frame_pages = ttk.Frame(app, padding=0, bootstyle="primary")
-frame_pages.place(relx=0.5, y=int(screen_height*0.6593), anchor="center", height=int(screen_height*0.0185))
+frame_pages.place(relx=0.505, y=int(screen_height*0.6593), anchor="center", height=int(screen_height*0.0185))
 
 
 # Create styled radio buttons
@@ -59,7 +59,6 @@ radio_button_1 = ctk.CTkRadioButton(
     command=lambda: show_page("1")
 )
 radio_button_1.pack(side="left", padx=0)  # Add space between buttons
-
 
 radio_button_2 = ctk.CTkRadioButton(
     master=frame_pages,
@@ -96,7 +95,7 @@ radio_button_3 = ctk.CTkRadioButton(
 radio_button_3.pack(side="left", padx=0)
 
 # Show the initial page (Home)
-show_page("1")
+show_page("3")
 
 # Start the application
 app.mainloop()

@@ -5,6 +5,7 @@ import customtkinter as ctk
 from tkinter import *
 import tkinter as tk
 from tkinter import simpledialog
+from PIL import Image, ImageTk
 import time
 # from fuzzywuzzy import process 
 
@@ -20,51 +21,124 @@ timer_end_time = 0  # Timer end time
 tasks = ["Task1", "Task2", "Task3"]
 remaining_time = 0
 
-def naive_algorithm(input_text, tasks):
-    return [task for task in tasks if task.lower() == input_text.lower()]
+def create_searchable_combobox(master, task_list):
+    def filter_tasks(event):
+        query = search_entry.get().lower()
+        filtered = [task for task in task_list if query in task.lower()]
+        update_listbox(filtered)
+
+    def update_listbox(filtered_tasks):
+        listbox.delete(0, tk.END)
+        for task in filtered_tasks:
+            listbox.insert(tk.END, task)
+
+        if filtered_tasks:
+            listbox.place(x=search_entry.winfo_x(), y=search_entry.winfo_y() + search_entry.winfo_height() + 5, width=search_entry.winfo_width())
+        else:
+            listbox.place_forget()
+
+    def select_task(event):
+        selected = listbox.get(listbox.curselection())
+        search_entry.delete(0, tk.END)
+        search_entry.insert(0, selected)
+        listbox.place_forget()  # Hide listbox after selection
+
+    def hide_listbox(event=None):
+        listbox.place_forget()  # Hide the listbox when clicking outside or pressing Escape
+
+    # Create a frame for the search bar
+    search_frame = ctk.CTkFrame(master, fg_color="transparent")
+    search_frame.pack(pady=(10,0), fill="none")
+
+    # Search entry (like a search bar)
+    search_entry = ctk.CTkEntry(
+        search_frame,
+        placeholder_text="Task Name",
+        font=("Arial", 14),
+        fg_color="white",  # Set the background color of the search bar
+        text_color="#A4ADBD",  # Set the text color
+        border_color="white",  # Set border color for a subtle effect
+        corner_radius=20,      # Rounded edges for a better look
+        width= 300,  # Set width in pixels
+        height=40   # Set height in pixels
+    )
+    search_entry.pack(padx=10, pady=5, fill="x")
+    search_entry.bind("<KeyRelease>", filter_tasks)  # Filter tasks as you type
+    search_entry.bind("<FocusOut>", hide_listbox)  # Hide listbox when losing focus
+
+    # Listbox for search results (overlay style)
+    listbox = tk.Listbox(
+        master,
+        height=5,
+        font=("Arial", 12),
+        relief=tk.FLAT,  # No border
+        fg="white",      # Updated text color
+        highlightthickness=1,
+        selectbackground="#BA5757",  # Selection highlight
+        selectforeground="white"   # Text color for selection
+    )
+    listbox.bind("<<ListboxSelect>>", select_task)
+    listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when it loses focus
+
+    return search_frame
 
 def create_productivity_page(app):
+    app.configure(bg="#DC7373")
     global timer_running, timer_end_time
     breaks_remaining = 3  # Initializes the number of breaks
     oble_icon = PhotoImage(file=str(relative_to_assets("oble_icon.png")))
 
+    
     # Create the main frame for the productivity page
-    frame_productivity = ctk.CTkFrame(app, fg_color="white")
-    frame_productivity.pack(fill="both", expand=True, padx=20, pady=20)
+    frame_productivity = ctk.CTkFrame(app, fg_color="#DC7373")
+    frame_productivity.pack(fill="both", expand=True, pady=0)
 
-    # Create a frame for the task input and position it properly
-    task_frame = ctk.CTkFrame(frame_productivity, fg_color="transparent")
-    task_frame.pack(pady=10, fill="x", expand=True)
+    search_bar = create_searchable_combobox(frame_productivity, tasks)
 
-    # Create a smaller rounded entry-like ComboBox
-    task_entry = ctk.CTkComboBox(
-        master=task_frame,
-        values=tasks,
-        corner_radius=20,  # Makes the widget rounded
-        width=250,  # Smaller width
-        height=30,  # Smaller height
-        font=("Arial", 12),  # Adjust font size
-        fg_color="gray",
-        border_width=1,
-        border_color="white",
-        state="readonly"
+    frame_time = ttk.Frame(frame_productivity, bootstyle="info", padding=25)
+    frame_time.pack(fill="x", padx=0, pady=(0,0))
+
+    frame_oble = ttk.Frame(frame_productivity, bootstyle="primary", padding=0)
+    frame_oble.pack(pady=0, fill="both", expand=True)
+
+    frame_white = ttk.Frame(frame_productivity)
+    frame_white.pack(side="bottom", fill="x")  # A
+
+    frame_button = ttk.Frame(frame_white, bootstyle="primary", padding=0)
+    frame_button.pack(fill="x", padx=10, pady=(0, 9), side="bottom")
+
+
+
+
+# Inside the create_productivity_page function
+
+    # Create the ttk.Meter widget named circle
+    circle = ttk.Meter(
+        master=frame_time,
+        metersize=1000,  # Diameter of the circle
+        amountused=100,   # Initial value of the meter
+        metertype="full",  # Full circle
+        meterthickness=80,
+        interactive=False  # Disable interactivity for read-only display
     )
-    task_entry.pack(pady=10, fill="x", expand=True)
+    circle.configure(bootstyle="danger")
+    circle.place(relx=0.5, y=520, anchor="center")
+
 
     # Timer Label
-    timer_label = tk.Label(frame_productivity, text="00:00", font=("Arial", 36))
-    timer_label.pack(pady=10)
+    timer_label = tk.Label(frame_time, text="00:00", font=("Helvetica", 55))
+    timer_label.pack(pady=(35,0))
 
-    breaks_label = tk.Label(frame_productivity, text=f"Breaks remaining: {breaks_remaining}")
-    breaks_label.pack(pady=10)
+    breaks_label = tk.Label(frame_time, text=f"Breaks remaining: {breaks_remaining}", font=("Helvetica", 10))
+    breaks_label.pack(pady=0)
 
     oble_icon_label = tk.Label(
-        frame_productivity,
+        frame_oble,
         image=oble_icon,
         bg="white"
     )
     oble_icon_label.image = oble_icon  # Keep a reference to the image
-    oble_icon_label.pack(pady=10, fill="x", expand=True)
+    #oble_icon_label.pack(pady=10, fill="both", expand=True)
 
     # Start Timer Function
     def start_timer():
@@ -118,22 +192,21 @@ def create_productivity_page(app):
 
     # Start Timer Button
     start_timer_button = ctk.CTkButton(
-        master=frame_productivity,
-        text="Start Timer",
-        command=start_timer,
-        width=200,
-        height=50,
-        font=('Arial', 18, 'bold'),
+        master=frame_button,
+        text="Set Goals",
         text_color="white",
-        corner_radius=20,
-        fg_color="#cf5b58",  # Red color for start
-        hover_color="#c4524e",  # Hover effect color
-        anchor="center"
+        command=start_timer,
+        fg_color="#DC7373",
+        hover_color="#c4524e",
+        width=360,
+        height=56,
+        corner_radius=19,
+        font=("Helvetica", 15),
     )
-    start_timer_button.pack(pady=20, padx=20, side="bottom", fill="x")
+    start_timer_button.pack(side="bottom", anchor="s", pady=10)
 
     # Reset Timer Button
-    reset_button = tk.Button(frame_productivity, text="Reset Timer", command=reset_timer)
-    reset_button.pack(pady=10)
+    # reset_button = tk.Button(frame_button, text="Reset Timer", command=reset_timer)
+    # reset_button.pack(pady=10)
 
     return frame_productivity
