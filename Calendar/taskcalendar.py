@@ -31,7 +31,7 @@ class TkinterCalendar(Calendar):
 
 
     def formatmonth(self, master, year, month):
-        dates = self.monthdatescalendar(year, month) #generates a list of weeks (with dates) for a given month.
+        dates = self.monthdatescalendar(year, month)
         frame = ttk.Frame(master, bootstyle=PRIMARY)
         self.labels = []
 
@@ -48,11 +48,15 @@ class TkinterCalendar(Calendar):
                 bootstyle=SECONDARY
             ).grid(row=0, column=c, padx=5, pady=(5,5))
 
+        # Configure columns to expand
+        for c in range(7):
+            frame.grid_columnconfigure(c, weight=1, uniform="equal")
+
         for r, week in enumerate(dates, start=1):
             labels_row = []
             for c, date in enumerate(week):
                 cell_frame = ttk.Frame(frame, width=50, height=50, bootstyle=PRIMARY)
-                cell_frame.grid(row=r, column=c, padx=5, pady=25)
+                cell_frame.grid(row=r, column=c, padx=5, pady=25, sticky="nsew")
 
                 label = ttk.Label(
                     cell_frame,
@@ -62,45 +66,44 @@ class TkinterCalendar(Calendar):
                     anchor="center",
                     bootstyle=SECONDARY
                 )
-                label.pack()
+                label.pack(expand=True, fill="both")
 
-                # configuration of the days thats not in the current month
+                # Configuration for days not in the current month
                 if date.month != month:
                     label.configure(foreground="#f2ebea")
 
-                # configuration of all the sundays for that month
+                # Configuration for Sundays
                 if c == 6 and date.month == month:
                     label.configure(foreground="#cf5b58")
 
-                # configuration of the current day
+                # Highlight current day
                 if date == today:
                     label.configure(
                         font=("Helvetica", 9, "bold"),
                         foreground="#050505",
-                        background="#efefef" #idk if this is ugly or not
+                        background="#efefef"
                     )
 
                 if date in self.tasks:
                     task_frame = ttk.Frame(cell_frame, bootstyle=PRIMARY)
                     task_frame.pack(fill="both", expand=True)
-                    max_tasks_per_row = 2 #task max per row sa date
+                    max_tasks_per_row = 2
                     base_task_width = 10
                     task_height = 5
 
-                    num_tasks = len(self.tasks[date]) # Total number of tasks for the date
+                    num_tasks = len(self.tasks[date])
 
                     for i, task in enumerate(self.tasks[date]):
                         row = i // max_tasks_per_row
                         col = i % max_tasks_per_row
 
-                        # this adjusts the width if there's only one task, making it wider
                         task_width = base_task_width * 2.5 if num_tasks == 1 else base_task_width
 
                         task_button = ctk.CTkButton(
                             master=task_frame,
                             text="",
                             fg_color=task["color"],
-                            hover_color=task["color"], #just made it the same color because it doesnt really act as a button for users to click
+                            hover_color=task["color"],
                             width=task_width,
                             height=task_height,
                             corner_radius=1
@@ -112,110 +115,89 @@ class TkinterCalendar(Calendar):
 
         return frame
 
+
     def formatweek(self, master, year, month):
         today = datetime.now().date()
 
-        week_dates = [self.current_week + timedelta(days=i) for i in range(7)] #shows the week header
+        # Generate week dates for the current week
+        week_dates = [self.current_week + timedelta(days=i) for i in range(7)]
 
-        # main container to help with the scrollbars
-        container = ctk.CTkFrame(master, fg_color="white", width=480, height=820)
-        container.pack_propagate(False) #to make it consistent (rs)
+        # Main container
+        container = ctk.CTkFrame(master, fg_color="white")
         container.pack(fill="both", expand=True)
 
-        #scrollable canvas
-        canvas = ctk.CTkCanvas(container, bg="white", width=460, height=562)
-        canvas.grid(row=0, column=0, sticky="nsew")
+        # Configure grid layout for equal expansion
+        container.grid_columnconfigure(tuple(range(7)), weight=1, uniform="equal")  # 7 columns
+        container.grid_rowconfigure(0, weight=1)  # Single row
 
-        # our vertical scrollbar
-        v_scrollbar = ctk.CTkScrollbar(container, orientation="vertical", command=canvas.yview)
-        v_scrollbar.grid(row=0, column=1, sticky="ns")
-
-        # our horizontal scrollbar
-        h_scrollbar = ctk.CTkScrollbar(container, orientation="horizontal", command=canvas.xview)
-        h_scrollbar.grid(row=1, column=0, sticky="ew")
-
-        # Configure the canvas for scrolling
-        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
-
-        # Frame inside the canvas
-        week_frame = ttk.Frame(canvas, bootstyle=PRIMARY)
-        canvas.create_window((0, 0), window=week_frame, anchor="nw")
-
-        # days of the week layout
+        # Days of the week layout
         weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
         for c, (weekday, date) in enumerate(zip(weekdays, week_dates)):
-            cell_frame = ttk.Frame(week_frame, bootstyle=PRIMARY)
-            cell_frame.grid(row=0, column=c, padx=10, pady=0, sticky="nsew")
+            # Cell container for each day
+            cell_frame = ctk.CTkFrame(container, fg_color="white", corner_radius=5)
+            cell_frame.grid(row=0, column=c, padx=5, pady=5, sticky="nsew")
 
-            header_label = ttk.Label(
-                cell_frame,
+            # Header with date and day of the week
+            header_label = ctk.CTkLabel(
+                master=cell_frame,
                 text=f"{date.strftime('%d %b')}\n{weekday}",
                 font=("Helvetica", 10, "bold"),
                 justify="center",
                 anchor="center",
-                bootstyle=SECONDARY,
+                text_color="black",
             )
-            header_label.pack()
+            header_label.pack(fill="both", expand=False, pady=(5, 0))
 
-            # Task frame inside each date cell
-            task_frame = ttk.Frame(cell_frame, bootstyle=PRIMARY)
-            task_frame.pack(fill="both", expand=True)
-
+            # Highlight today's date
             if date == today:
                 header_label.configure(
                     font=("Helvetica", 10, "bold"),
-                    foreground="#050505",
+                    text_color="#050505",
                 )
 
+            # Task container inside each day
+            task_frame = ctk.CTkFrame(cell_frame, fg_color="#f0f0f0", corner_radius=5)
+            task_frame.pack(fill="both", expand=True, padx=5, pady=(5, 10))
+
+            # Display tasks if any
             if date in self.tasks:
-                max_tasks_per_row = 1
-                base_task_width = 60
-                task_height = 40
-
                 for i, task in enumerate(self.tasks[date]):
-                    row = i // max_tasks_per_row
-                    col = i % max_tasks_per_row
-
-                    task_width = base_task_width * 2.5
-
+                    # Create a frame for each task
                     task_button = ctk.CTkFrame(
                         master=task_frame,
                         fg_color=task["color"],
                         corner_radius=5,
-                        width=task_width,
-                        height=task_height,
+                        height=50,
                     )
-                    task_button.grid(row=row, column=col, padx=2, pady=5)
+                    task_button.pack(fill="x", expand=False, pady=5)
 
-                    #label: title of the task
+                    # Task name
                     name_label = ctk.CTkLabel(
                         master=task_button,
                         text=task.get("name"),
                         font=("Helvetica", 14, "bold"),
                         text_color=TkinterCalendar.darken_color(task["color"]),
                     )
-                    name_label.pack(side="top", anchor="center", padx=15, pady=(2, 0))
+                    name_label.pack(side="top", padx=5, pady=(2, 0))
 
-                    #label: subject name
+                    # Task subject
                     subject_label = ctk.CTkLabel(
                         master=task_button,
                         text=task.get("subject"),
                         font=("Helvetica", 11),
                         text_color=TkinterCalendar.darken_color(task["color"]),
                     )
-                    subject_label.pack(side="bottom", anchor="center", padx=15, pady=(0, 2))
-
-        # Update scroll region
-        week_frame.update_idletasks()
-        canvas.configure(scrollregion=canvas.bbox("all"))
+                    subject_label.pack(side="bottom", padx=5, pady=(0, 2))
 
         return container
+
 
 
 app = ttk.Window(themename="custom")
 app.geometry("480x820")
 app.title("Calendar View")
+app.configure(bg="#f0f0f0")  # Set the background color
 
 current_year = datetime.now().year
 current_month = datetime.now().month
@@ -227,8 +209,8 @@ def update_month_calendar():
     header.configure(text=f"{datetime(current_year, current_month, 1):%B %Y}")
     if frame:
         frame.destroy()
-    frame = tkcalendar.formatmonth(app, current_year, current_month)
-    frame.pack(pady=20)
+    frame = tkcalendar.formatmonth(frame_view, current_year, current_month)
+    frame.pack(pady=20, fill="both", expand=True) 
 
 def update_week_calendar():
     global frame
@@ -239,8 +221,8 @@ def update_week_calendar():
     week_number = tkcalendar.current_week.isocalendar()[1]  
     year = tkcalendar.current_week.year
     header.configure(text=f"Week {week_number} - {year}")
-    frame = tkcalendar.formatweek(app, tkcalendar.current_week.year, tkcalendar.current_week.month)
-    frame.pack(pady=20)
+    frame = tkcalendar.formatweek(frame_view, tkcalendar.current_week.year, tkcalendar.current_week.month)
+    frame.pack(pady=20, fill="both", expand=True) 
 
 def prev_month():
     global current_year, current_month
@@ -281,8 +263,8 @@ def show_month_view():
     current_month = datetime.now().month  # Reset to curret when we switch
     if frame:
         frame.destroy()
-    frame = tkcalendar.formatmonth(app, current_year, current_month)
-    frame.pack(pady=20)
+    frame = tkcalendar.formatmonth(frame_view, current_year, current_month)
+    frame.pack(pady=20, fill="both", expand=True) 
     update_navigation_buttons()  # Update navigation buttons so that it knows what to switch
     header.configure(text=f"{datetime(current_year, current_month, 1):%B %Y}") # refreshes to the current month
     color_view()
@@ -294,8 +276,8 @@ def show_week_view():
     tkcalendar.current_week = datetime.now().date() - timedelta(days=datetime.now().weekday())  # Refreshes the week calendar with the current week
     if frame:
         frame.destroy()
-    frame = tkcalendar.formatweek(app, current_year, current_month)
-    frame.pack(pady=20)
+    frame = tkcalendar.formatweek(frame_view, current_year, current_month)
+    frame.pack(pady=20, fill="both", expand=True) 
     update_navigation_buttons() 
     update_week_calendar() 
     color_view()
@@ -317,7 +299,10 @@ frame_controls = ttk.Frame(app, bootstyle="primary", padding=0)
 frame_controls.pack(fill="x", padx=10, pady=(10, 5))
 
 frame_view_controls = ttk.Frame(app, bootstyle="primary", padding=5)
-frame_view_controls.pack(fill="y", padx=10, pady=(1, 1))
+frame_view_controls.pack(fill="both", padx=10, pady=(1, 1))
+
+frame_view = ttk.Frame(app, bootstyle="secondary", padding=0)
+frame_view.pack(fill="both", padx=10, pady=(1, 1))
 
 
 def color_view():
@@ -393,7 +378,7 @@ tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#
 tkcalendar.name_task(datetime(2024, 11, 26).date(), "Examination", "CMSC 130", "#DC7373")
 tkcalendar.name_task(datetime(2024, 11, 27).date(), "Evaluation", "Ethics", "#90EE90")
 
-frame = tkcalendar.formatmonth(app, current_year, current_month)
+frame = tkcalendar.formatmonth(frame_view, current_year, current_month)
 frame.pack(pady=20)
 
 app.mainloop()
