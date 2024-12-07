@@ -29,7 +29,6 @@ frames["1"] = create_tasks_page(app)
 frames["2"] = create_home_page(app)
 frames["3"] = create_productivity_page(app)
 
-
 # Function to switch pages
 def show_page(page_number):
     """Switches to the selected page by hiding others."""
