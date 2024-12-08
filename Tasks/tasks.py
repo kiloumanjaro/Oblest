@@ -358,9 +358,8 @@ def create_tasks_page(app):
     def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
         relevant_tasks = []
         for task in tasks:
-            start = task.initial_date.date()
-            end = task.deadline.date() if task.deadline else start
-            if start <= selected_date <= end:
+            target_day = task.initial_date.date()
+            if target_day == selected_date:
                 relevant_tasks.append(task)
         return relevant_tasks
     
@@ -404,13 +403,7 @@ def create_tasks_page(app):
     switcher = create_switcher()
     switcher.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=False)
 
-    def previous_of():
-        pass  # Placeholder, implement later
-
-    def next_of():
-        pass  # Placeholder, implement later
-
-    def toggle_switcher(option, default=True):
+    def toggle_switcher(option, default=True, date_offset=0):
         """
         Handles switching between Day, Week, and Month views, including UI updates and button setup.
         """
@@ -425,21 +418,26 @@ def create_tasks_page(app):
         
         # Dictionary to map options to functions
         options = {
-            "Day": show_day_view_option, 
+            "Day": show_day_view, 
             "Week": show_week_view_option,    
             "Month": show_month_view_option,  
         }
 
         # This will determine how far forward or backward the switcher will be relative to the given date
         # depending on the date type
-        date_offset = 0
-
+        
+        func = options.get(option)
+        current_offset = date_offset
+        
         if default:
-            date_offset = 0
             # Call the appropriate view function based on the option
-            func = options.get(option)
             if func:
                 func()
+                
+        else:
+            if func:
+                func(date_offset=current_offset)
+            
 
         # Configure the grid to expand and center the widgets (for switcher)
         switcher.grid_columnconfigure(0, weight=0)
@@ -447,6 +445,14 @@ def create_tasks_page(app):
         switcher.grid_columnconfigure(2, weight=1)
         switcher.grid_columnconfigure(3, weight=0)
         switcher.grid_rowconfigure(0, weight=1)
+
+        def previous_of():
+            toggle_switcher(option, default=False, date_offset= current_offset - 1)
+            
+
+        def next_of():
+            toggle_switcher(option, default=False, date_offset= current_offset + 1)
+        
 
         # Create Previous button
         previous = ctk.CTkButton(
@@ -485,9 +491,15 @@ def create_tasks_page(app):
         )
         next.grid(row=0, column=3, padx=20, pady=5)
 
-    def populate_day_view():
+    def show_day_view(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Populate tasks or show generic message
-        tasks = get_tasks_for_day(all_tasks.get_all_tasks(), datetime.now().date())
+        target_date = datetime.now().date() + timedelta(days=date_offset)
+        print(f"Target Date: {target_date}")
+
+        if date_offset != 0:
+            tasks = get_tasks_for_day(all_tasks.get_all_tasks(), target_date)
+        elif given_date:
+            tasks = get_tasks_for_day(all_tasks.get_all_tasks(), given_date)
 
         # Safely check for 'general' key
         if all_tasks.courses.get("general"):
@@ -502,8 +514,8 @@ def create_tasks_page(app):
         else:
             create_generic_frame(frame_current_tasks)
             
-    def show_day_view_option():
-        populate_day_view()
+    # def show_day_view_option():
+    #     populate_day_view()
 
     def show_week_view_option():
         # Show week view and toggle calendar
