@@ -488,17 +488,20 @@ def create_tasks_page(app):
     def populate_day_view():
         # Populate tasks or show generic message
         tasks = get_tasks_for_day(all_tasks.get_all_tasks(), datetime.now().date())
-        if all_tasks.courses["general"]:
+
+        # Safely check for 'general' key
+        if all_tasks.courses.get("general"):
             print(all_tasks.courses["general"].task_amount())
             print(datetime.now())
-            
-        # nodes = get_nodes(tasks)
+        else:
+            print("Key 'general' is missing or has no tasks.")
+
         if tasks:
             for task in tasks:
                 create_task_frame(frame_current_tasks, task)
         else:
             create_generic_frame(frame_current_tasks)
-
+            
     def show_day_view_option():
         populate_day_view()
 

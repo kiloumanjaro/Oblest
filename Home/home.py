@@ -43,9 +43,6 @@ def create_home_page(app):
     frame_home = ttk.Frame(app)
     frame_home.pack(fill="both", expand=True)  # Ensure frame_home expands
 
-    screen_width = app.winfo_screenwidth()
-    screen_height = app.winfo_screenheight()
-
     frame_controls = ttk.Frame(frame_home, bootstyle="success", padding=0)
     frame_controls.pack(fill="x", padx=10, pady=(10, 5))
 
