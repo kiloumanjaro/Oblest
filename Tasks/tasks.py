@@ -394,29 +394,96 @@ def create_tasks_page(app):
     # Week, Month, Day button functionality
     # ----------------------------------------------
 
-    def update_task_frame(selected_option):
+    def create_switcher():
+        return ctk.CTkFrame(
+            master=frame_tasks,
+            fg_color="white",
+            height=20
+        )
+
+    switcher = create_switcher()
+    switcher.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=False)
+
+    def previous_of():
+        pass  # Placeholder, implement later
+
+    def next_of():
+        pass  # Placeholder, implement later
+
+    def toggle_switcher(option, default=True):
+        """
+        Handles switching between Day, Week, and Month views, including UI updates and button setup.
+        """
+
         # Clear existing widgets in frame_current_tasks
         for widget in frame_current_tasks.winfo_children():
             widget.destroy()
 
-        # Pack the frame
-        frame_current_tasks.pack(pady=(0, 5), padx=(12, 18), fill="both", expand=True)
-
-        # Define a dictionary to map options to functions
+        # Pack the frame_current_tasks (only if not already packed)
+        if not frame_current_tasks.winfo_ismapped():
+            frame_current_tasks.pack(pady=(0, 5), padx=(12, 18), fill="both", expand=True)
+        
+        # Dictionary to map options to functions
         options = {
-            "Day": show_day_view_option,
-            "Week": show_week_view_option,
-            "Month": show_month_view_option
+            "Day": show_day_view_option, 
+            "Week": show_week_view_option,    
+            "Month": show_month_view_option,  
         }
 
-        # Get the corresponding function for the selected option
-        func = options.get(selected_option)
+        # This will determine how far forward or backward the switcher will be relative to the given date
+        # depending on the date type
+        date_offset = 0
 
-        # If the function exists, call it
-        if func:
-            func()
+        if default:
+            date_offset = 0
+            # Call the appropriate view function based on the option
+            func = options.get(option)
+            if func:
+                func()
 
+        # Configure the grid to expand and center the widgets (for switcher)
+        switcher.grid_columnconfigure(0, weight=0)
+        switcher.grid_columnconfigure(1, weight=1)
+        switcher.grid_columnconfigure(2, weight=1)
+        switcher.grid_columnconfigure(3, weight=0)
+        switcher.grid_rowconfigure(0, weight=1)
 
+        # Create Previous button
+        previous = ctk.CTkButton(
+            master=switcher,
+            corner_radius=200,
+            width=100,
+            text="Previous",
+            text_color="brown",
+            fg_color="#f7f7f7",
+            hover_color="#cf5b58",
+            height=30,
+            command=previous_of  # Link to your previous_of function
+        )
+        previous.grid(row=0, column=0, padx=20, pady=5)
+
+        # Create Date State Label
+        datestate = ctk.CTkLabel(
+            master=switcher,
+            text=option,
+            text_color="black",
+            wraplength=400,
+        )
+        datestate.grid(row=0, column=1, columnspan=2, padx=5, pady=5, sticky="nsew")
+
+        # Create Next button
+        next = ctk.CTkButton(
+            master=switcher,
+            corner_radius=200,
+            width=100,
+            text="Next",
+            text_color="brown",
+            fg_color="#f7f7f7",
+            hover_color="#cf5b58",
+            height=30,
+            command=next_of  # Link to your next_of function
+        )
+        next.grid(row=0, column=3, padx=20, pady=5)
 
     def populate_day_view():
         # Populate tasks or show generic message
@@ -450,8 +517,7 @@ def create_tasks_page(app):
     # ----------------------------------------------
 
     def on_segmented_button_change(option):
-        toggle_switcher(option)
-        update_task_frame(option)
+        toggle_switcher(option, default=True)
 
     button1 = ctk.CTkSegmentedButton(
         master=segmented_frame,
@@ -471,74 +537,6 @@ def create_tasks_page(app):
 
     button1.pack(fill="both", expand="yes")
     button1.set("Day")
-    
-    # ----------------------------------------------
-    # Switcher Logic
-    # ----------------------------------------------
-    
-    def create_switcher():
-        return ctk.CTkFrame(
-            master=frame_tasks,
-            fg_color="white",
-            height=20
-        )
-        
-    # switcher = create_switcher()
-    switcher = None
-    
-    
-    def toggle_switcher(option):
-        
-        
-        if (switcher == True):
-            for widget in switcher.winfo_children():
-                widget.destroy()  # or widget.grid_forget()
-        else:
-            switcher = create_switcher()
-            switcher.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=False)
-
-        # Configure the grid to expand and center the widgets
-        switcher.grid_columnconfigure(0, weight=0)
-        switcher.grid_columnconfigure(1, weight=1)
-        switcher.grid_columnconfigure(2, weight=1)
-        switcher.grid_columnconfigure(3, weight=0)
-        switcher.grid_rowconfigure(0, weight=1)
-
-        previous = ctk.CTkButton(
-            master=switcher,
-            corner_radius=200,
-            width=100,  # Set the width of the button
-            text="Previous",
-            text_color="brown",
-            fg_color="#f7f7f7",
-            hover_color="#cf5b58",
-            height=30,  # Set the height of the button
-        )
-        previous.grid(row=0, column=0, padx=20, pady=5)
-
-        datestate = ctk.CTkLabel(
-            master=switcher,
-            text=option,
-            text_color="black",
-            wraplength=400,  # Optional: set the wrap length to a large value
-        )
-        datestate.grid(row=0, column=1, columnspan=2, padx=5, pady=5, sticky="nsew")
-
-        next = ctk.CTkButton(
-            master=switcher,
-            corner_radius=200,
-            width=100,  # Set the width of the button
-            height=30,  # Set the height of the button
-            text="Next",
-            text_color="brown",
-            fg_color="#f7f7f7",
-            hover_color="#cf5b58",
-        )
-        next.grid(row=0, column=3, padx=20, pady=5)
-    
-    toggle_switcher("Day")
-    
-
 
     # ==============================================
     # Section 9: Task Nodes and Frame Creation
@@ -711,7 +709,7 @@ def create_tasks_page(app):
     # 9.4: Frame Creation Logic | SHOWS UP BY DEFAULT AT START OF PROGRAM
     # ----------------------------------------------
     
-    populate_day_view()
+    toggle_switcher("Day", default=True)
 
     # ==============================================
     # Section 10: Add Task Button
