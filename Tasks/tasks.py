@@ -1,7 +1,6 @@
 # ==============================================
 # Section 1: Data Preparation
 # ==============================================
-
 from pathlib import Path
 from calendar import Calendar
 from datetime import datetime, timedelta
@@ -15,6 +14,7 @@ import tkinter as tk
 from tkinter import PhotoImage
 from tkinter import simpledialog, scrolledtext
 from datetime import datetime
+from loadingOverlay import *
 
 # import list
 # import calendar
@@ -494,15 +494,43 @@ def create_tasks_page(app):
         
         func = options.get(option)
         current_offset = date_offset
-        
-        if default:
-            # Call the appropriate view function based on the option
-            if func:
-                func()
                 
-        else:
+        date_display = None
+
+        if default:
+            # For default view, use the respective function with default parameters
             if func:
-                func(date_offset=current_offset)
+                if option == "Day":
+                    func()  # Call show_day_view with no offset (today)
+                    date_display = datetime.now().date().strftime("%Y-%m-%d")
+                elif option == "Week":
+                    func()
+                    # Calculate week number (e.g., "Week 47")
+                    week_number = datetime.now().date().isocalendar()[1]
+                    date_display = f"Week {week_number}"
+                elif option == "Month":
+                    func()
+                    # Get current month name (e.g., "November")
+                    date_display = datetime.now().date().strftime("%B")
+        else:
+            # For non-default view (previous/next), pass the date_offset
+            if func:
+                if option == "Day":
+                    func(date_offset=date_offset)  # Pass date_offset to show_day_view
+                    target_date = datetime.now().date() + timedelta(days=date_offset)
+                    date_display = target_date.strftime("%Y-%m-%d")
+                elif option == "Week":
+                    func()  # Week view function doesn't use date_offset directly
+                    # Calculate week number based on offset (this is more complex)
+                    target_week = datetime.now().date() + timedelta(weeks=date_offset)
+                    week_number = target_week.isocalendar()[1]
+                    date_display = f"Week {week_number}"
+                elif option == "Month":
+                    func()  # Month view function doesn't use date_offset directly
+                    # Calculate month based on offset (also more complex)
+                    target_month = datetime.now().date() + timedelta(days=date_offset * 30)  # Approximation!
+                    date_display = target_month.strftime("%B")
+
             
 
         # Configure the grid to expand and center the widgets (for switcher)
@@ -518,6 +546,7 @@ def create_tasks_page(app):
 
         def next_of():
             toggle_switcher(option, default=False, date_offset= current_offset + 1)
+            
         
 
         # Create Previous button
@@ -537,7 +566,7 @@ def create_tasks_page(app):
         # Create Date State Label
         datestate = ctk.CTkLabel(
             master=switcher,
-            text=option,
+            text=date_display,
             text_color="black",
             wraplength=400,
         )
@@ -583,12 +612,12 @@ def create_tasks_page(app):
     # def show_day_view_option():
     #     populate_day_view()
 
-    def show_week_view_option():
+    def show_week_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Show week view and toggle calendar
         show_week_view()
         toggle_calendar()
 
-    def show_month_view_option():
+    def show_month_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Show month view and toggle calendar
         show_month_view()
         toggle_calendar()
