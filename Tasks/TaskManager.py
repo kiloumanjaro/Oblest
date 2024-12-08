@@ -19,12 +19,13 @@ class Task:
     priority: float
     # reminders: List[str]
     text_content: str
-    course_tag: str
     initial_date: datetime
-
+    
+    completion_date: Optional[datetime] = None
+    course_tag: str = "general"
     deadline: Optional[datetime] = None
     status: TaskStatus = TaskStatus.NOT_DONE
-    difficulty_rating: int = 1 # Default difficulty rating
+    difficulty_rating: int = 1 # Default difficulty rating, easiest
     
     def calculate_priority(self, current_date: date = None) -> float:
         if current_date is None:
@@ -262,6 +263,14 @@ class CourseManager:
         """Returns the total number of tasks in the course."""
         return len(self.skip_list)
     
+    def get_all_tasks(self) -> List[Task]:
+        tasks = []
+        current = self.skip_list.header.forward[0]
+        while current:
+            tasks.append(current.task)
+            current = current.forward[0]
+        return tasks
+    
     # Some function here to return the number of completed tasks
     def get_completed_task_count(self) -> int:
         """Returns the number of completed tasks."""
@@ -354,6 +363,8 @@ class TaskManager:
     def get_courses(self) -> List[str]:
         """Returns a list of all course names."""
         return list(self.courses.keys())
+
+
 
     def load_courses(self) -> None:
         """Load all course managers"""
@@ -449,3 +460,8 @@ class TaskManager:
         tasks.sort(key=lambda task: task.priority, reverse=True)  # Sort in descending priority
         return tasks[:top_n] if top_n else tasks
     
+    def get_all_tasks(self) -> List[Task]:
+        all_tasks = []
+        for course in self.courses.values():
+            all_tasks.extend(course.get_all_tasks())
+        return all_tasks

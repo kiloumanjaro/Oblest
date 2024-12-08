@@ -2,6 +2,7 @@ from pathlib import Path
 import ttkbootstrap as ttk
 import customtkinter as ctk
 from tkinter import StringVar
+from Tasks import TaskManager
 
 # Paths
 OUTPUT_PATH = Path(__file__).parent
@@ -28,6 +29,7 @@ frames = {}
 frames["1"] = create_tasks_page(app)
 frames["2"] = create_home_page(app)
 frames["3"] = create_productivity_page(app)
+
 
 # Function to switch pages
 def show_page(page_number):
