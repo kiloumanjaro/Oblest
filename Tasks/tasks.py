@@ -684,27 +684,41 @@ def create_tasks_page(app):
                         task_frame = ttk.Frame(cell_frame, bootstyle=PRIMARY)
                         task_frame.pack(fill="both", expand=True)
                         max_tasks_per_row = 2
-                        base_task_width = 10
-                        task_height = 5
 
                         num_tasks = len(self.tasks[date])
+                        rows_needed = (num_tasks + max_tasks_per_row - 1) // max_tasks_per_row 
 
-                        for i, task in enumerate(self.tasks[date]):
-                            row = i // max_tasks_per_row
-                            col = i % max_tasks_per_row
+                        for row in range(rows_needed):
+                            task_frame.grid_rowconfigure(row, weight=1, uniform="equal")
+                        for col in range(max_tasks_per_row):
+                            task_frame.grid_columnconfigure(col, weight=1, uniform="equal")
 
-                            task_width = base_task_width * 2.5 if num_tasks == 1 else base_task_width
-
+                        if num_tasks == 1:
                             task_button = ctk.CTkButton(
                                 master=task_frame,
-                                text="",
+                                text="",  # Optional: Add task description
                                 fg_color=task["color"],
                                 hover_color=task["color"],
-                                width=task_width,
-                                height=task_height,
-                                corner_radius=1
+                                corner_radius=1,
+                                width = 250,
+                                height =5
                             )
-                            task_button.grid(row=row, column=col, padx=2, pady=2)
+                            task_button.pack(fill="both", expand=True, padx=2, pady=2)
+                        else:
+                            for i, task in enumerate(self.tasks[date]):
+                                row = i // max_tasks_per_row
+                                col = i % max_tasks_per_row
+
+                                task_button = ctk.CTkButton(
+                                    master=task_frame,
+                                    text="",
+                                    fg_color=task["color"],
+                                    hover_color=task["color"],
+                                    width=250,
+                                    height=5,
+                                    corner_radius=1
+                                )
+                                task_button.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
 
                     labels_row.append(label)
                 self.labels.append(labels_row)
@@ -736,7 +750,7 @@ def create_tasks_page(app):
             for c, (weekday, date) in enumerate(zip(weekdays, week_dates)):
                 # Cell container for each day
                 cell_frame = ctk.CTkFrame(self.container, fg_color="white", corner_radius=5)
-                cell_frame.grid(row=0, column=c, padx=5, pady=5, sticky="nsew")
+                cell_frame.grid(row=0, column=c, padx=0, pady=0, sticky="nsew")
 
                 # Header with date and day of the week
                 header_label = ctk.CTkLabel(
@@ -745,7 +759,7 @@ def create_tasks_page(app):
                     font=("Helvetica", 10, "bold"),
                     justify="center",
                     anchor="center",
-                    text_color="black",
+                    text_color="#848484",
                 )
                 header_label.pack(fill="both", expand=False, pady=(5, 0))
 
@@ -791,9 +805,6 @@ def create_tasks_page(app):
                         subject_label.pack(side="bottom", padx=5, pady=(0, 2))
 
             return self.container
-
-
-
 
     current_year = datetime.now().year
     current_month = datetime.now().month
@@ -914,8 +925,10 @@ def create_tasks_page(app):
 
     # Sample tasks with descriptions for week view
     tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
-    tkcalendar.name_task(datetime(2024, 11, 26).date(), "Examination", "CMSC 130", "#DC7373")
-    tkcalendar.name_task(datetime(2024, 11, 27).date(), "Evaluation", "Ethics", "#90EE90")
+    tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700") #just to see how it looks like with more tasks
+    tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
+    tkcalendar.name_task(datetime(2024, 12, 8).date(), "Examination", "CMSC 130", "#DC7373")
+    tkcalendar.name_task(datetime(2024, 12, 5).date(), "Evaluation", "Ethics", "#90EE90")
 
     def toggle_calendar():
         """Toggle the visibility of the calendar frame."""
