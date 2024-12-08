@@ -772,7 +772,7 @@ def create_tasks_page(app):
 
                 # Task container inside each day
                 task_frame = ctk.CTkFrame(cell_frame, fg_color="#f0f0f0", corner_radius=5)
-                task_frame.pack(fill="both", expand=True, padx=5, pady=(5, 10))
+                task_frame.pack(fill="both", expand=True, padx=1, pady=(5, 10))
 
                 # Display tasks if any
                 if date in self.tasks:
@@ -784,25 +784,16 @@ def create_tasks_page(app):
                             corner_radius=5,
                             height=50,
                         )
-                        task_button.pack(fill="x", expand=False, pady=5)
-
-                        # Task name
-                        name_label = ctk.CTkLabel(
-                            master=task_button,
-                            text=task.get("name"),
-                            font=("Helvetica", 14, "bold"),
-                            text_color=TkinterCalendar.darken_color(task["color"]),
-                        )
-                        name_label.pack(side="top", padx=5, pady=(2, 0))
-
+                        task_button.pack(fill="x", expand=False, pady=1)
+                        
                         # Task subject
                         subject_label = ctk.CTkLabel(
                             master=task_button,
                             text=task.get("subject"),
-                            font=("Helvetica", 11),
+                            font=("Helvetica", 6),
                             text_color=TkinterCalendar.darken_color(task["color"]),
                         )
-                        subject_label.pack(side="bottom", padx=5, pady=(0, 2))
+                        subject_label.pack(side="bottom", padx=1, pady=(0, 0))
 
             return self.container
 
