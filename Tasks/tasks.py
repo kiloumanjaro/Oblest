@@ -623,8 +623,12 @@ def create_tasks_page(app):
 
 
         def formatmonth(self, master, year, month):
+            # Check if the frame exists and destroy it if necessary
+            if hasattr(self, 'frame') and self.frame.winfo_exists():
+                self.frame.destroy()
+
             dates = self.monthdatescalendar(year, month)
-            frame = ttk.Frame(master, bootstyle=PRIMARY)
+            self.frame = ttk.Frame(master, bootstyle=PRIMARY)
             self.labels = []
 
             today = datetime.now().date()
@@ -632,22 +636,22 @@ def create_tasks_page(app):
             weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
             for c, weekday in enumerate(weekdays):
                 ttk.Label(
-                    frame,
+                    self.frame,
                     text=weekday,
                     font=("Helvetica", 12, "bold"),
                     width=4,
                     anchor="center",
                     bootstyle=SECONDARY
-                ).grid(row=0, column=c, padx=5, pady=(5,5))
+                ).grid(row=0, column=c, padx=5, pady=(5, 5))
 
             # Configure columns to expand
             for c in range(7):
-                frame.grid_columnconfigure(c, weight=1, uniform="equal")
+                self.frame.grid_columnconfigure(c, weight=1, uniform="equal")
 
             for r, week in enumerate(dates, start=1):
                 labels_row = []
                 for c, date in enumerate(week):
-                    cell_frame = ttk.Frame(frame, width=50, height=50, bootstyle=PRIMARY)
+                    cell_frame = ttk.Frame(self.frame, width=50, height=50, bootstyle=PRIMARY)
                     cell_frame.grid(row=r, column=c, padx=5, pady=25, sticky="nsew")
 
                     label = ttk.Label(
@@ -705,29 +709,33 @@ def create_tasks_page(app):
                     labels_row.append(label)
                 self.labels.append(labels_row)
 
-            return frame
+            return self.frame
 
 
         def formatweek(self, master, year, month):
             today = datetime.now().date()
 
+            # Check if the container exists and destroy it if necessary
+            if hasattr(self, 'container') and self.container.winfo_exists():
+                self.container.destroy()
+
             # Generate week dates for the current week
             week_dates = [self.current_week + timedelta(days=i) for i in range(7)]
 
             # Main container
-            container = ctk.CTkFrame(master, fg_color="white")
-            container.pack(fill="both", expand=True)
+            self.container = ctk.CTkFrame(master, fg_color="white")
+            self.container.pack(fill="both", expand=True)
 
             # Configure grid layout for equal expansion
-            container.grid_columnconfigure(tuple(range(7)), weight=1, uniform="equal")  # 7 columns
-            container.grid_rowconfigure(0, weight=1)  # Single row
+            self.container.grid_columnconfigure(tuple(range(7)), weight=1, uniform="equal")  # 7 columns
+            self.container.grid_rowconfigure(0, weight=1)  # Single row
 
             # Days of the week layout
             weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
             for c, (weekday, date) in enumerate(zip(weekdays, week_dates)):
                 # Cell container for each day
-                cell_frame = ctk.CTkFrame(container, fg_color="white", corner_radius=5)
+                cell_frame = ctk.CTkFrame(self.container, fg_color="white", corner_radius=5)
                 cell_frame.grid(row=0, column=c, padx=5, pady=5, sticky="nsew")
 
                 # Header with date and day of the week
@@ -782,7 +790,8 @@ def create_tasks_page(app):
                         )
                         subject_label.pack(side="bottom", padx=5, pady=(0, 2))
 
-            return container
+            return self.container
+
 
 
 
