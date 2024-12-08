@@ -4,6 +4,8 @@ from tkinter import StringVar, BooleanVar
 import customtkinter as ctk
 import random
 from datetime import datetime
+from Tasks.tasks import create_tasks_page
+
 
 def create_archives_page(app):
     ASSETS_PATH = Path(__file__).parent / "assets"
@@ -24,6 +26,8 @@ def create_archives_page(app):
         return None
     
     frame_archives = ttk.Frame(app)
+    frame_taskpage = create_tasks_page(app)
+    frame_taskpage.pack_forget() 
 
     frame_controls = ttk.Frame(frame_archives, bootstyle="success", padding=0)
     frame_controls.pack(fill="x", padx=10, pady=(10, 5))
@@ -32,6 +36,8 @@ def create_archives_page(app):
         if right_button_state.get():
             right_button_state.set(False)
             button_right.configure(image=right_icon)
+            frame_archives.pack_forget()  # Hide archives page
+            frame_taskpage.pack(fill="both", expand=True)  # Show tasks page
         else:
             right_button_state.set(True)
             button_right.configure(image=right_icon_active)
