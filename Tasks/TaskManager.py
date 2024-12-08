@@ -16,7 +16,7 @@ class TaskStatus(Enum):
 class Task:
     id: int
     name: str
-    priority: float
+    
     # reminders: List[str]
     text_content: str
     initial_date: datetime
@@ -25,6 +25,7 @@ class Task:
     course_tag: str = "general"
     deadline: Optional[datetime] = None
     status: TaskStatus = TaskStatus.NOT_DONE
+    priority: float = 1
     difficulty_rating: int = 1 # Default difficulty rating, easiest
     
     def calculate_priority(self, current_date: date = None) -> float:
