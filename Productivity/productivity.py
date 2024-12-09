@@ -122,10 +122,9 @@ def create_searchable_combobox(master, task_list):
     def hide_listbox(event=None):
         if not (search_entry.focus_get() or listbox.focus_get()):
             listbox.place_forget()  # Hide the listbox when clicking outside or when mouse leaves
-
     # Create a frame for the search bar
     search_frame = ctk.CTkFrame(master, fg_color="transparent")
-    search_frame.pack(pady=(10, 0), fill="none", side="top")
+    search_frame.pack(pady=(10,0), fill="none", side="top")
 
     # Search entry (like a search bar)
     search_entry = ctk.CTkEntry(
@@ -158,7 +157,6 @@ def create_searchable_combobox(master, task_list):
     listbox.bind("<<ListboxSelect>>", select_task)
     listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when focus moves out
     listbox.bind("<Leave>", hide_listbox)  # Hide listbox when mouse leaves the listbox
-
     return search_frame
     #return search_entry
 
