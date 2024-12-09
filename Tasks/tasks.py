@@ -60,7 +60,7 @@ def create_tasks_page(app):
     frame_controls.pack(fill="x", padx=10, pady=(10, 5), side="top")
 
     frame_button = ttk.Frame(frame_taskpage, bootstyle="primary", padding=0)
-    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
+    frame_button.pack(fill="x", padx=10, pady=(12, 5), side="bottom")
 
     left_button_state = BooleanVar(value=False)
     right_button_state = BooleanVar(value=False)
@@ -460,7 +460,7 @@ def create_tasks_page(app):
         fg_color="white",
         bg_color="transparent"
     )
-    segmented_frame.pack(fill="x", pady=(10, 0), padx=15,)
+    segmented_frame.pack(fill="x", pady=(0, 0), padx=15, side="top")
 
     custom_font = ("Arial", 13,)  # Replace "Arial" with your desired font family
 
@@ -474,13 +474,13 @@ def create_tasks_page(app):
         bg_color="transparent",
         corner_radius=0,
         fg_color="#dcdfe7",
-        height = 350,
+        height = 390,
         border_color="#FFFFFF",
         scrollbar_button_color="#dcdfe7",       # Default color of scrollbar button     
         scrollbar_button_hover_color="#555555"
     )
     # Initially hide the frame (it will only appear when "Day" is selected)
-    frame_current_tasks.pack(pady=0, padx=(12, 18), fill="both", side="bottom", expand=YES)
+    frame_current_tasks.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=YES)
 
     original_scrollbar_grid_info = frame_current_tasks._scrollbar.grid_info()
 
@@ -542,7 +542,7 @@ def create_tasks_page(app):
         )
 
     switcher = create_switcher()
-    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=False)
+    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=NO)
 
     def toggle_switcher(option, default=True, date_offset=0):
         """
@@ -723,87 +723,15 @@ def create_tasks_page(app):
         command=on_segmented_button_change  # Corrected here
     )
 
-    button1.pack(fill="both", expand="yes")
+    button1.pack(fill="both", expand="yes", side="top", pady=(0, 0))
     button1.set("Day")
 
     # ==============================================
     # Section 9: Task Nodes and Frame Creation
     # ==============================================
-
-    # ----------------------------------------------
-    # 9.1: Sample Data and Node Creation
-    # ----------------------------------------------
-    # Sample task list creation
-
-    tasks = [
-        Task(
-            id=1,
-            name="Task 1",
-            priority=5,
-            text_content="Task 1 content",
-            course_tag="Course 1",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-01", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-15", '%Y-%m-%d')
-        ),
-        Task(
-            id=2,
-            name="Task 2",
-            priority=3,
-            text_content="Task 2 content",
-            course_tag="Course 2",
-            difficulty_rating=2,
-            initial_date=datetime.strptime("2022-01-05", '%Y-%m-%d')
-        ),
-        Task(
-            id=3,
-            name="Task 3",
-            priority=8,
-            text_content="Task 3 content",
-            course_tag="Super Cool Course",
-            difficulty_rating=4,
-            initial_date=datetime.strptime("2022-01-10", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-20", '%Y-%m-%d')
-        ),
-        Task(
-            id=4,
-            name="Task 4",
-            priority=6,
-            text_content="Task 4 content",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-15", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-25", '%Y-%m-%d')
-        ),
-        Task(
-            id=5,
-            name="Task 5",
-            priority=6,
-            text_content="Task 4 content But Perhaps",
-            course_tag="Course 4",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-15", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-25", '%Y-%m-%d')
-        ),
-        Task(
-            id=6,
-            name="Task 6",
-            priority=6,
-            text_content="Task 4 content But Awesome",
-            course_tag="Course 4",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-15", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-25", '%Y-%m-%d')
-        ),
-    ]
-
-    # Node list generation from tasks
-    # nodes = [Node(task, 1) for task in tasks]
-    
-    # The following mini section is for retrieval of tasks depending on the selected view
-    # These functions must be called by their respective date functions
     
     # ----------------------------------------------
-    # 9.2: Generic Frame Generation
+    # 9.1: Generic Frame Generation
     # ----------------------------------------------
     
     def create_generic_frame(master):
@@ -841,15 +769,20 @@ def create_tasks_page(app):
     # ----------------------------------------------
 
     def create_task_frame(master, task):
-        course_color = {
-            "Course 1": "#FFC080",  # Orange
-            "Course 2": "#C5CAE9",  # Blue
-            # Add more course colors as needed
-        }
+
+        color_done = None
+        task_function = None
+        
+        if task.status == TaskStatus.DONE:  
+            color_done = "grey"
+            task_function = lambda: None
+        else:
+            color_done = "white"
+            task_function = lambda: somefunction(task)
 
         task_frame = ctk.CTkFrame(
             master=master,
-            fg_color=course_color.get(task.course_tag, "white"),
+            fg_color=color_done,
             corner_radius=20,
             height=20
         )
@@ -871,25 +804,24 @@ def create_tasks_page(app):
             master=title_frame,
             corner_radius=100,
             text=task.name,
-            fg_color="white",
-            bg_color="white",
+            fg_color=color_done,
+            bg_color=color_done,
             width=20,
             text_color="black",
             font=("Arial", 16),
-            hover_color="#f7f7f7",
+            hover_color=color_done,
             anchor="w",
-            # command=lambda: somefunction(task)
+            command=task_function
         ).grid(row=0, column=0, sticky="w")
 
-    # Course tag button
+        # Course tag button
         course_button = ctk.CTkButton(
             master=title_frame,
             text=task.course_tag,
             fg_color=all_tasks.get_course_color(task.course_tag),  # Button background color
             hover_color=all_tasks.get_course_color(task.course_tag),  # Same color for hover
-            text_color="white",
+            text_color=color_done,
             font=("Arial", 14),
-            command=lambda: None,  # Replace with your desired action
             width=10,
             corner_radius=50
         )
@@ -911,8 +843,8 @@ def create_tasks_page(app):
         edit_button = ctk.CTkButton(
             master=task_frame,
             corner_radius=100,  
-            fg_color="white",
-            bg_color="white",
+            fg_color=color_done,
+            bg_color=color_done,
             hover_color="#f7f7f7",
             text_color="gray",
             text="...",
@@ -972,7 +904,7 @@ def create_tasks_page(app):
         print(task.deadline)
         
         # Status Field
-        ttk.Label(frame_edit_task, text="Status:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
+        ttk.Label(frame_edit_task, text="Status: [FOR TESTING ONLY]", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         status_var = tk.StringVar()
         status_var.set(task.status.value)  # Set initial value to task's current status
         status_options = [status.value for status in TaskStatus][:2]
@@ -1138,16 +1070,22 @@ def create_tasks_page(app):
 
             # Hide the edit form and show the task list/buttons
             frame_edit_task.pack_forget()
+            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")
             frame_tasks.pack(fill="both", expand=True)
-            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(0, int(screen_height * 0.0046)), side="bottom")
+            
+            # Updates the count of completed tasks
+            # global Tasks_Completed
+            
+            Tasks_Completed.configure(text=f"{all_tasks.get_num_completed_tasks()}")
 
         def cancel_edit():
             """
             Cancels the edit operation and returns to the task list.
             """
             frame_edit_task.pack_forget()
+            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")
+            # frame_button.pack(fill="x", padx=10, pady=(12, 5), side="bottom")
             frame_tasks.pack(fill="both", expand=True)
-            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(0, int(screen_height * 0.0046)), side="bottom")
 
         # ----------------------------------------------
         # 9.5.3: Button Creation and Layout
