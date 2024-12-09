@@ -115,16 +115,9 @@ def create_searchable_combobox(master, task_list):
     def hide_listbox(event=None):
         if  not (search_entry.focus_get() or listbox.focus_get()):
             listbox.place_forget()  # Hide the listbox when clicking outside or when mouse leaves
-<<<<<<< HEAD
-
-    # Create a frame for the search bar
-    search_frame = ctk.CTkFrame(master, fg_color="transparent")
-    search_frame.pack(pady=(10, 0), fill="none")
-=======
     # Create a frame for the search bar
     search_frame = ctk.CTkFrame(master, fg_color="transparent")
     search_frame.pack(pady=(10,0), fill="none", side="top")
->>>>>>> 710b9439308fd565cee85fa70c7734f35c34d0b4
 
     # Search entry (like a search bar)
     search_entry = ctk.CTkEntry(
@@ -157,10 +150,6 @@ def create_searchable_combobox(master, task_list):
     listbox.bind("<<ListboxSelect>>", select_task)
     listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when focus moves out
     listbox.bind("<Leave>", hide_listbox)  # Hide listbox when mouse leaves the listbox
-<<<<<<< HEAD
-
-=======
->>>>>>> 710b9439308fd565cee85fa70c7734f35c34d0b4
     return search_frame
 
 def create_productivity_page(app):
