@@ -40,6 +40,15 @@ def create_archives_page():
     frame_text = ttk.Frame(frame_container, bootstyle="primary", padding=10)
     frame_text.pack(fill="x", padx=10, pady=5)
 
+    frame_search = ttk.Frame(frame_container, bootstyle="primary", padding=0)
+    frame_search.pack(fill="x", padx=10, pady=5)
+
+    frame_labels = ttk.Frame(frame_search, bootstyle="warning", padding=0)
+    frame_labels.pack(fill="x", padx=10, pady=5, side="bottom")
+
+    frame_items = ttk.Frame(frame_container, bootstyle="info", padding=0)
+    frame_items.pack(fill="x", padx=10, pady=5)
+
     frame_button = ttk.Frame(frame_archives, bootstyle="primary", padding=0)
     frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
 
@@ -78,22 +87,76 @@ def create_archives_page():
         width=4
     )
     button_right.pack(side="right", padx=0, anchor="e")
+    
 
-    motivation = ttk.Label(
+    text = ttk.Label(
         frame_text,
         text="Archives",
         font=("Helvetica", 22, "bold"),
         bootstyle="fg"
     )
-    motivation.pack(side="top", pady=0, anchor="w")
+    text.pack(side="top", pady=0, anchor="w")
 
-    date = ttk.Label(
+    description = ttk.Label(
         frame_text,
         text="Tasks you’ve completed will be archived here, so \nyou can restore them later.",
         font=("Helvetica", 10),  # Ensures the font is not bold
         bootstyle="secondary"
     )
-    date.pack(side="top", pady=4, anchor="w")
+    description.pack(side="top", pady=4, anchor="w")
+
+
+    # ==============================================
+    # Search Bar
+    # ==============================================
+
+    # Adding search bar to frame_search
+    search_var = StringVar()  # Holds the text entered in the search bar
+    search_entry = ttk.Entry(frame_search, textvariable=search_var, bootstyle="info", width=30)
+    search_entry.pack(side="left", padx=(0, 10), pady=5)
+
+    def perform_search():
+        query = search_var.get()
+        print(f"Searching for: {query}")  # Replace with actual search logic
+
+    search_button = ctk.CTkButton(
+        master=frame_search,
+        text="⌕",
+        command=perform_search,
+        corner_radius=8,
+        fg_color="#DC7373",
+        width=25,
+        height=25,
+        font=("Arial", 13, "bold"),
+        anchor="n",  # "n" stands for north, placing the text to the top
+    )
+    search_button.pack(side="left", padx=0, pady=0)
+
+    text = ttk.Label(
+        frame_labels,
+        text="Name",
+        font=("Helvetica", 12),
+        bootstyle="fg"
+    )
+    text.pack(side="top", pady=0, anchor="w")
+
+
+    # ==============================================
+    # CTkScrollableFrame with Checkable Items
+    # ==============================================
+
+    scrollable_frame = ctk.CTkScrollableFrame(frame_items, height=200, width=460, fg_color="white")
+    scrollable_frame.pack(fill="both", expand=True)
+
+    def create_checkable_item(text):
+        var = BooleanVar(value=False)
+        checkbox = ctk.CTkCheckBox(scrollable_frame, text=text, variable=var, text_color="#525252", fg_color="#DC7373", hover_color="#e78e8e    ")
+        checkbox.pack(anchor="w", padx=5, pady=5)
+        return var  # Returning the BooleanVar allows us to check the state of the checkbox later.
+
+    checkboxes = []
+    for i in range(10):  # Example of adding 10 checkable items
+        checkboxes.append(create_checkable_item(f"Task {i + 1}"))
 
     # Set Goals button
     button_1 = ctk.CTkButton(
