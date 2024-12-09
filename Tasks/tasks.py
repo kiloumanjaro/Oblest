@@ -944,8 +944,8 @@ def create_tasks_page(app):
             for r, week in enumerate(dates, start=1):
                 labels_row = []
                 for c, date in enumerate(week):
-                    cell_frame = ttk.Frame(self.frame, width=13, height=13, bootstyle=PRIMARY)
-                    cell_frame.grid(row=r, column=c, padx=3, pady=12, sticky="nsew")
+                    cell_frame = ttk.Frame(self.frame, width=14, height=14  , bootstyle=PRIMARY)
+                    cell_frame.grid(row=r, column=c, padx=1, pady=10, sticky="nsew")
 
                     label = ttk.Label(
                         cell_frame,
@@ -1110,7 +1110,7 @@ def create_tasks_page(app):
         week_number = tkcalendar.current_week.isocalendar()[1]  
         year = tkcalendar.current_week.year
         frame = tkcalendar.formatweek(frame_current_tasks, tkcalendar.current_week.year, tkcalendar.current_week.month)
-        frame.pack(pady=20, fill="both", expand=True) 
+        frame.pack(pady=10, fill="both", expand=True) 
 
     def prev_month():
         global current_year, current_month
