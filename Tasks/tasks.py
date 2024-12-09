@@ -209,21 +209,11 @@ def create_tasks_page(app):
     # ==============================================
     # Section 5: Task Form Functions and Creation (Modified)
     # ==============================================
-    
+
     def refresh_task_list(course_option, given_deadline):
-        """
-        Refreshes the task list displayed in the UI.
-        This is a placeholder function. You need to implement the actual logic
-        to update your task list widget (e.g., a Treeview) based on the data
-        from the TaskManager.
-        """
         print("Refreshing task list...")
         toggle_switcher("Day", default=True)
         all_tasks.courses[course_option].update_priorities(given_deadline)
-        # Example steps (replace with your actual UI update logic):
-        # 1. Clear your existing task list widget.
-        # 2. Get the updated list of tasks from all_tasks (your TaskManager).
-        # 3. Iterate through the tasks and add them to your task list widget.
 
     def show_task_form():
         global all_tasks  # Ensure we're using the global TaskManager instance
@@ -284,7 +274,7 @@ def create_tasks_page(app):
         # ----------------------------------------------
         # 5.3: Form Action Functions (Modified)
         # ----------------------------------------------
-        
+
         def submit_task_form():
             global all_tasks
 
@@ -306,6 +296,25 @@ def create_tasks_page(app):
                 )
                 return
 
+            # --- COURSE EXISTENCE CHECK WITH CONFIRMATION ---
+            if course not in all_tasks.get_courses():
+                if not simpledialog.messagebox.askyesno(
+                    "Course Not Found",
+                    f"The course '{course}' does not exist. Do you want to create it?"
+                ):
+                    # User chose not to create the course, so return to the form
+                    return
+
+                # User chose to create the course
+                try:
+                    all_tasks.add_course(course)
+                    course_dropdown.configure(values=all_tasks.get_courses()) # Update dropdown values
+                    course_var.set(course) # Set the new course as selected
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Creating Course", str(e))
+                    return
+            # --- END OF COURSE CHECK ---
+
             # Prepare task data dictionary
             task_data = {
                 'name': task_title,
@@ -323,8 +332,7 @@ def create_tasks_page(app):
                 simpledialog.messagebox.showerror("Error Adding Task", str(e))
                 return
 
-            # Refresh task list display (You'll need to implement this function)
-            refresh_task_list(course, deadline_date_str)
+            refresh_task_list(course, deadline_date)
 
             # Hide the form and show the task list/buttons
             frame_task_form.pack_forget()
@@ -366,7 +374,6 @@ def create_tasks_page(app):
             fg_color="#cf5b58",
             hover_color="#c4524e"
         ).pack(side="left", padx=10)
-
         
     # ==============================================
     # Section 6: Task Count Display
@@ -858,7 +865,7 @@ def create_tasks_page(app):
             font=("Arial", 16),
             hover_color="#f7f7f7",
             anchor="w",
-            command=lambda: None
+            # command=lambda: somefunction(task)
         ).grid(row=0, column=0, sticky="w")
 
     # Course tag button
@@ -899,7 +906,7 @@ def create_tasks_page(app):
             width=20,  # Adjust width as needed
             height=20,
             font=("Arial", 10),
-            command=lambda: None  # Empty command for now
+            command=lambda: edit_task(task)  # Empty command for now
         )
         # Place at bottom-right corner, accounting for padding/margins
         edit_button.place(relx=1.0, rely=1.0, x=-10, y=-10, anchor="se")
@@ -909,6 +916,215 @@ def create_tasks_page(app):
     # ----------------------------------------------
     
     toggle_switcher("Day", default=True)
+
+    # ==============================================
+    # Section 9.5: Edit Task Functionality (NEW)
+    # ==============================================
+    
+    def edit_task(task: Task):
+        """
+        Opens a form to edit an existing task.
+        """
+        frame_tasks.pack_forget()
+        frame_button.pack_forget()
+
+        frame_edit_task = ttk.Frame(frame_taskpage, bootstyle="primary")
+        frame_edit_task.pack(fill="both", expand=True)
+
+        # ----------------------------------------------
+        # 9.5.1: Form Field Creation
+        # ----------------------------------------------
+        # Task Title Field
+        ttk.Label(frame_edit_task, text="Task Title:").pack(pady=10)
+        task_title_entry = ttk.Entry(frame_edit_task, width=50)
+        task_title_entry.insert(0, task.name)  # Pre-fill with existing title
+        task_title_entry.pack(pady=10)
+
+        # Deadline Date Field
+        ttk.Label(frame_edit_task, text="Deadline Date:").pack(pady=10)
+        deadline_date_entry = ttk.DateEntry(
+            master=frame_edit_task,
+            bootstyle="danger",
+            dateformat="%Y-%m-%d"
+        )
+        if task.deadline:
+            deadline_date_entry._startdate = task.deadline  # Pre-fill with existing deadline
+        deadline_date_entry.pack(pady=10)
+        
+        # Status Field
+        ttk.Label(frame_edit_task, text="Status:").pack(pady=10)
+        status_var = tk.StringVar()
+        status_var.set(task.status.value)  # Set initial value to task's current status
+        status_options = [status.value for status in TaskStatus][:2]
+        status_dropdown = ctk.CTkComboBox(
+            master=frame_edit_task,
+            corner_radius=20,
+            text_color="white",
+            fg_color="#cf5b58",
+            values=status_options,
+            variable=status_var,
+            button_color="#cf5b58",
+            button_hover_color="#c4524e",
+            dropdown_fg_color="#cf5b58",
+            dropdown_hover_color="#c4524e",
+            border_color="#cf5b58",
+        )
+        status_dropdown.pack(pady=10)
+
+        # Course Selection Field
+        ttk.Label(frame_edit_task, text="Course:", font=('Helvetica', 14, 'bold')).pack(pady=10)
+        courses = all_tasks.get_courses()
+        if not courses:
+            courses = ["general"]
+        course_var = tk.StringVar()
+        course_var.set(task.course_tag)  # Pre-select the task's current course
+        course_dropdown = ctk.CTkComboBox(
+            master=frame_edit_task,
+            corner_radius=20,
+            text_color="white",
+            fg_color="#cf5b58",
+            values=courses,
+            variable=course_var,
+            button_color="#cf5b58",
+            button_hover_color="#c4524e",
+            dropdown_fg_color="#cf5b58",
+            dropdown_hover_color="#c4524e",
+            border_color="#cf5b58",
+        )
+        course_dropdown.pack(pady=10)
+
+        # Content Field
+        ttk.Label(frame_edit_task, text="Content:").pack(pady=10)
+        content_text = scrolledtext.ScrolledText(frame_edit_task, width=50, height=10)
+        content_text.insert("1.0", task.text_content)  # Pre-fill with existing content
+        content_text.pack(pady=10)
+
+        # ----------------------------------------------
+        # 9.5.2: Form Action Functions
+        # ----------------------------------------------
+
+        def update_task():
+            """
+            Updates the task with the new values from the form.
+            """
+            nonlocal task  # Access the task variable from the outer scope
+
+            # Get updated values from form fields
+            new_title = task_title_entry.get()
+            new_deadline_str = deadline_date_entry.entry.get()
+            new_course = course_var.get()
+            new_content = content_text.get("1.0", "end-1c")
+            new_status_str = status_var.get()
+
+            # Validate deadline date
+            try:
+                if new_deadline_str:
+                    new_deadline = datetime.strptime(new_deadline_str, "%Y-%m-%d")
+                else:
+                    new_deadline = None
+            except ValueError:
+                simpledialog.messagebox.showerror(
+                    "Invalid Date",
+                    "Please enter a valid date in the format YYYY-MM-DD."
+                )
+                return
+
+            # Convert status string back to TaskStatus enum
+            try:
+                new_status = TaskStatus(new_status_str)
+            except ValueError:
+                simpledialog.messagebox.showerror("Invalid Status", "Please select a valid status.")
+                return
+
+            # --- COURSE EXISTENCE CHECK ---
+            while new_course not in all_tasks.get_courses():
+                simpledialog.messagebox.showerror(
+                    "Invalid Course",
+                    f"The course '{new_course}' does not exist. Please select a valid course from the dropdown."
+                )
+                # Re-display the edit form to allow the user to select a valid course
+                # You might need to adjust how you re-display the form based on your UI structure
+                # For example, if you have a separate function to show the edit form:
+                # show_edit_form(task)  
+                # Or, you can simply return here, assuming the form will remain visible:
+                return
+            # --- END OF COURSE EXISTENCE CHECK ---
+
+            # Store old course tag to help with moving task between courses
+            old_course = task.course_tag
+
+            # Update task properties
+            task.name = new_title
+            task.deadline = new_deadline
+            task.course_tag = new_course
+            task.text_content = new_content
+            task.status = new_status
+
+            # Update the task in the TaskManager (handling potential course change)
+            try:
+                if old_course != new_course:
+                    # Move the task to the new course
+                    all_tasks.move_task(task.id, old_course, new_course)
+                else:
+                    # Update the task in the current course
+                    all_tasks.courses[new_course].update_task(task)
+
+                # Handle status change - mark as complete/incomplete if needed
+                if new_status == TaskStatus.DONE:
+                    all_tasks.courses[new_course].mark_task_complete(task.id)
+                elif new_status == TaskStatus.NOT_DONE and task.status != TaskStatus.NOT_DONE:
+                    all_tasks.courses[new_course].mark_task_incomplete(task.id)
+
+            except ValueError as e:
+                simpledialog.messagebox.showerror("Error Updating Task", str(e))
+                return
+
+            # Refresh task list display
+            refresh_task_list(new_course, new_deadline)
+
+            # Hide the edit form and show the task list/buttons
+            frame_edit_task.pack_forget()
+            frame_tasks.pack(fill="both", expand=True)
+            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(0, int(screen_height * 0.0046)), side="bottom")
+
+        def cancel_edit():
+            """
+            Cancels the edit operation and returns to the task list.
+            """
+            frame_edit_task.pack_forget()
+            frame_tasks.pack(fill="both", expand=True)
+            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(0, int(screen_height * 0.0046)), side="bottom")
+
+        # ----------------------------------------------
+        # 9.5.3: Button Creation and Layout
+        # ----------------------------------------------
+        button_frame = ctk.CTkFrame(
+            master=frame_edit_task,
+            fg_color="#f8f9fa",
+        )
+        button_frame.pack(pady=10)
+
+        ctk.CTkButton(
+            master=button_frame,
+            text="Update",
+            font=('Helvetica', 14),
+            text_color="white",
+            command=update_task,
+            corner_radius=20,
+            fg_color="#cf5b58",
+            hover_color="#c4524e"
+        ).pack(side="left", padx=10)
+
+        ctk.CTkButton(
+            master=button_frame,
+            text="Cancel",
+            font=('Helvetica', 14),
+            text_color="white",
+            command=cancel_edit,
+            corner_radius=20,
+            fg_color="#cf5b58",
+            hover_color="#c4524e"
+        ).pack(side="left", padx=10)
 
     # ==============================================
     # Section 10: Add Task Button
