@@ -426,11 +426,7 @@ def create_tasks_page(app):
     Tasks_Completed = ctk.CTkLabel(
         master=Tasks_Completed_Frame,
 
-        # Will Utilize the totals obtained from each Course Skipl List
-        ###########################################################
-        # text=f"{somenumberhere}";  # Replace with actual number #
-        ###########################################################
-        text="234",  # Replace with actual number
+        text=all_tasks.get_num_completed_tasks(),  # Replace with actual number
         bg_color="transparent",  # Background color
         fg_color="#ffffff",  # Foreground color
         font=(Font, 85),  # Font style and size
@@ -957,16 +953,23 @@ def create_tasks_page(app):
         task_title_entry.insert(0, task.name)  # Pre-fill with existing title
         task_title_entry.pack(pady=(0,10))
 
+        date_placeholder = None
+
+        if task.deadline:
+            date_placeholder = task.deadline.date()
+
         # Deadline Date Field
         ttk.Label(frame_edit_task, text="Deadline Date:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         deadline_date_entry = ttk.DateEntry(
             master=frame_edit_task,
             bootstyle="danger",
-            dateformat="%Y-%m-%d"
+            dateformat="%Y-%m-%d",
+            startdate=date_placeholder
         )
-        if task.deadline:
-            deadline_date_entry._startdate = task.deadline  # Pre-fill with existing deadline
         deadline_date_entry.pack(pady=(0,10))
+        
+        # Test
+        print(task.deadline)
         
         # Status Field
         ttk.Label(frame_edit_task, text="Status:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
@@ -1099,7 +1102,22 @@ def create_tasks_page(app):
             task.deadline = new_deadline
             task.course_tag = new_course
             task.text_content = new_content
-            task.status = new_status
+            
+            # Determine if task status needs to be updated and handle it
+            # This is only executed if the new status is different from the old status
+            if new_status != task.status:
+                try:
+                    if new_status == TaskStatus.DONE:
+                        all_tasks.courses[new_course].mark_task_complete(task.id)  # Mark as complete
+                    elif new_status == TaskStatus.NOT_DONE:
+                        all_tasks.courses[new_course].mark_task_incomplete(task.id)  # Mark as incomplete
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Updating Task Status", str(e))
+                    return
+            else:
+                # If the status hasn't changed, just update the other task properties
+                task.status = new_status
+
             task.difficulty_rating = new_difficulty_rating
 
             # Update the task in the TaskManager (handling potential course change)
@@ -1111,18 +1129,9 @@ def create_tasks_page(app):
                     # Update the task in the current course
                     all_tasks.courses[new_course].update_task(task)
 
-                # Handle status change - mark as complete/incomplete if needed
-                if new_status == TaskStatus.DONE:
-                    all_tasks.courses[new_course].mark_task_complete(task.id)
-                elif new_status == TaskStatus.NOT_DONE and task.status != TaskStatus.NOT_DONE:
-                    all_tasks.courses[new_course].mark_task_incomplete(task.id)
-
             except ValueError as e:
                 simpledialog.messagebox.showerror("Error Updating Task", str(e))
                 return
-            
-            # Update the task through CourseManager through the TaskManager
-            all_tasks.courses[new_course].update_task(task)
 
             # Refresh task list display
             refresh_task_list(new_course, new_deadline)

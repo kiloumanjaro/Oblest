@@ -44,7 +44,13 @@ class Task:
 
             # if current_date is None:
             current_date = datetime.now().date()
-                
+            
+            # Adjust priority if task is already completed
+            if self.status == TaskStatus.DONE:
+                priority = 0.0
+                self.priority = priority
+                print("Task is already completed")
+                return priority
 
             priority = self.difficulty_rating * 2  # Base priority based on difficulty
 
@@ -68,9 +74,7 @@ class Task:
                     deadline_factor = 10 / (1 + math.exp(0.5 * (days_until_deadline - 3)))
                     priority += deadline_factor
             
-            # Adjust priority if task is already completed
-            if self.status == TaskStatus.DONE:
-                priority = 0.0
+
 
             self.priority = priority
             return priority
@@ -271,11 +275,10 @@ class CourseManager:
     def mark_task_complete(self, task_id: int) -> None:
         """Marks a task as complete."""
         task = self.skip_list.search(task_id)
-        if task:
-            if not task.status:  # Check if task is already complete
-                task.status = TaskStatus.DONE
-                self.completed_tasks += 1
-                self.save()
+        if task.status == TaskStatus.NOT_DONE or task.status == TaskStatus.LATE:
+            task.status = TaskStatus.DONE
+            task.calculate_priority()  # This ensures priority is now zero.
+            self.save()
         else:
             raise ValueError(f"Task with ID {task_id} not found.")
     
@@ -283,11 +286,10 @@ class CourseManager:
     def mark_task_incomplete(self, task_id: int) -> None:
         """Marks a task as incomplete."""
         task = self.skip_list.search(task_id)
-        if task:
-            if task.status == TaskStatus.DONE:  # Check if task is already incomplete
-                task.status = TaskStatus.NOT_DONE
-                self.completed_tasks -= 1  # Decrement completed task counter.
-                self.save()
+        if task.status == TaskStatus.DONE:
+            task.status = TaskStatus.NOT_DONE
+            task.calculate_priority()
+            self.save()
         else:
             raise ValueError(f"Task with ID {task_id} not found.")
     
@@ -305,14 +307,21 @@ class CourseManager:
         return tasks
     
     # Some function here to return the number of completed tasks
+    # This traverses the skip list and counts the number of tasks with status DONE
     def get_completed_task_count(self) -> int:
         """Returns the number of completed tasks."""
-        return self.completed_tasks
+        count = 0
+        current = self.skip_list.header.forward[0]
+        while current:
+            if current.task.status == TaskStatus.DONE:
+                count += 1
+            current = current.forward[0]
+        return count
     
     # Some function here to return the number of incomplete tasks, mostly likely just the difference between completed and total
     def get_incomplete_task_count(self) -> int:
         """Returns the number of incomplete tasks."""
-        return self.task_amount() - self.completed_tasks
+        return self.task_amount() - self.get_completed_task_count()
 
 # --- TASK MANAGER ---
 class TaskManager:
@@ -505,6 +514,10 @@ class TaskManager:
             all_tasks.extend(course.get_all_tasks())
         all_tasks.sort(key=lambda task: task.priority, reverse=True)  # Sort in descending priority
         return all_tasks[:top_n] if top_n else all_tasks
+    
+    def get_num_completed_tasks(self) -> int:
+        """Returns the number of completed tasks."""
+        return sum(course.get_completed_task_count() for course in self.courses.values())
 
     def ensure_course_color(self, course_name: str) -> None:
         """Ensures that a course has a color assigned in the metadata."""
