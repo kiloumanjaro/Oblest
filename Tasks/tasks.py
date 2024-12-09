@@ -60,7 +60,7 @@ def create_tasks_page(app):
     frame_controls.pack(fill="x", padx=10, pady=(10, 5), side="top")
 
     frame_button = ttk.Frame(frame_taskpage, bootstyle="primary", padding=0)
-    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
+    frame_button.pack(fill="x", padx=10, pady=(12, 5), side="bottom")
 
     left_button_state = BooleanVar(value=False)
     right_button_state = BooleanVar(value=False)
@@ -546,11 +546,7 @@ def create_tasks_page(app):
     Tasks_Completed = ctk.CTkLabel(
         master=Tasks_Completed_Frame,
 
-        # Will Utilize the totals obtained from each Course Skipl List
-        ###########################################################
-        # text=f"{somenumberhere}";  # Replace with actual number #
-        ###########################################################
-        text="234",  # Replace with actual number
+        text=all_tasks.get_num_completed_tasks(),  # Replace with actual number
         bg_color="transparent",  # Background color
         fg_color="#ffffff",  # Foreground color
         font=(Font, 85),  # Font style and size
@@ -584,7 +580,7 @@ def create_tasks_page(app):
         fg_color="white",
         bg_color="transparent"
     )
-    segmented_frame.pack(fill="x", pady=(10, 0), padx=15,)
+    segmented_frame.pack(fill="x", pady=(0, 0), padx=15, side="top")
 
     custom_font = ("Arial", 13,)  # Replace "Arial" with your desired font family
 
@@ -597,14 +593,14 @@ def create_tasks_page(app):
         master=tasks_bottom,
         bg_color="transparent",
         corner_radius=0,
-        fg_color="#dcdfe7",
-        height = 350,
+        fg_color="white",
+        height = 390,
         border_color="#FFFFFF",
-        scrollbar_button_color="#dcdfe7",       # Default color of scrollbar button     
+        scrollbar_button_color="white",       # Default color of scrollbar button     
         scrollbar_button_hover_color="#555555"
     )
     # Initially hide the frame (it will only appear when "Day" is selected)
-    frame_current_tasks.pack(pady=0, padx=(12, 18), fill="both", side="bottom", expand=YES)
+    frame_current_tasks.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=YES)
 
     original_scrollbar_grid_info = frame_current_tasks._scrollbar.grid_info()
 
@@ -620,39 +616,53 @@ def create_tasks_page(app):
     # Helper Functions: Gets tasks for day, week, month
     # ----------------------------------------------
    
-    def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
+    def get_tasks_in_range(tasks: list[Task], start: datetime, end: datetime, exact_deadline: bool = False) -> list[Task]:
         relevant_tasks = []
         for task in tasks:
-            target_day = task.deadline.date()
-            if target_day == selected_date:
-                relevant_tasks.append(task)
-        return relevant_tasks
-    
-    def get_tasks_for_week(tasks: list[Task], start_of_week: datetime) -> list[Task]:
-        end_of_week = start_of_week + timedelta(days=6)
-        relevant_tasks = []
-        for task in tasks:
-            start = task.initial_date.date()
-            end = task.deadline.date() if task.deadline else start
-            if start <= end_of_week and end >= start_of_week:
-                relevant_tasks.append(task)
-        return relevant_tasks
-    
-    def get_tasks_for_month(tasks: list[Task], year: int, month: int) -> list[Task]:
-        # Calculate start and end of the month
-        start_of_month = datetime(year, month, 1)
-        if month == 12:
-            end_of_month = datetime(year + 1, 1, 1) - timedelta(days=1)
-        else:
-            end_of_month = datetime(year, month + 1, 1) - timedelta(days=1)
+            if exact_deadline:
+                # Day view: strictly match the deadline date
+                if task.deadline and task.deadline.date() == start:
+                    relevant_tasks.append(task)
+            else:
+                # Week/Month view: check if the task overlaps the given date range
+                task_start = task.initial_date.date()
+                task_end = task.deadline.date() if task.deadline else task_start
+                # Include tasks that fall within or intersect the given start-end range
+                if task_start <= end and task_end >= start:
+                    relevant_tasks.append(task)
 
-        relevant_tasks = []
-        for task in tasks:
-            start = task.initial_date.date()
-            end = task.deadline.date() if task.deadline else start
-            if start <= end_of_month and end >= start_of_month:
-                relevant_tasks.append(task)
         return relevant_tasks
+
+    def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
+        # As defined before, returns tasks that have a deadline exactly on selected_date
+        return [task for task in tasks if task.deadline and task.deadline.date() == selected_date]
+
+    def get_tasks_for_week_dict(tasks: list[Task], start_of_week: datetime) -> dict:
+        """Returns a dictionary of tasks keyed by day for the given week."""
+        week_tasks = {}
+        for i in range(7):  # 7 days in a week
+            current_date = start_of_week + timedelta(days=i)
+            week_tasks[current_date.date()] = get_tasks_for_day(tasks, current_date)
+        return week_tasks
+
+    def get_tasks_for_month_dict(tasks: list[Task], year: int, month: int) -> dict:
+        # Calculate the number of days in the month
+        if month == 12:
+            start_of_month = datetime(year, month, 1)
+            end_of_month = datetime(year+1, 1, 1) - timedelta(days=1)
+        else:
+            start_of_month = datetime(year, month, 1)
+            end_of_month = datetime(year, month+1, 1) - timedelta(days=1)
+
+        # Generate a dictionary mapping each day to its tasks
+        month_tasks = {}
+        current_date = start_of_month
+        while current_date <= end_of_month:
+            month_tasks[current_date.date()] = get_tasks_for_day(tasks, current_date)
+            current_date += timedelta(days=1)
+
+        return month_tasks
+
 
     # ----------------------------------------------
     # Week, Month, Day button functionality
@@ -666,7 +676,7 @@ def create_tasks_page(app):
         )
 
     switcher = create_switcher()
-    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=False)
+    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=NO)
 
     def toggle_switcher(option, default=True, date_offset=0):
         """
@@ -847,87 +857,15 @@ def create_tasks_page(app):
         command=on_segmented_button_change  # Corrected here
     )
 
-    button1.pack(fill="both", expand="yes")
+    button1.pack(fill="both", expand="yes", side="top", pady=(0, 0))
     button1.set("Day")
 
     # ==============================================
     # Section 9: Task Nodes and Frame Creation
     # ==============================================
-
-    # ----------------------------------------------
-    # 9.1: Sample Data and Node Creation
-    # ----------------------------------------------
-    # Sample task list creation
-
-    tasks = [
-        Task(
-            id=1,
-            name="Task 1",
-            priority=5,
-            text_content="Task 1 content",
-            course_tag="Course 1",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-01", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-15", '%Y-%m-%d')
-        ),
-        Task(
-            id=2,
-            name="Task 2",
-            priority=3,
-            text_content="Task 2 content",
-            course_tag="Course 2",
-            difficulty_rating=2,
-            initial_date=datetime.strptime("2022-01-05", '%Y-%m-%d')
-        ),
-        Task(
-            id=3,
-            name="Task 3",
-            priority=8,
-            text_content="Task 3 content",
-            course_tag="Super Cool Course",
-            difficulty_rating=4,
-            initial_date=datetime.strptime("2022-01-10", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-20", '%Y-%m-%d')
-        ),
-        Task(
-            id=4,
-            name="Task 4",
-            priority=6,
-            text_content="Task 4 content",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-15", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-25", '%Y-%m-%d')
-        ),
-        Task(
-            id=5,
-            name="Task 5",
-            priority=6,
-            text_content="Task 4 content But Perhaps",
-            course_tag="Course 4",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-15", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-25", '%Y-%m-%d')
-        ),
-        Task(
-            id=6,
-            name="Task 6",
-            priority=6,
-            text_content="Task 4 content But Awesome",
-            course_tag="Course 4",
-            difficulty_rating=3,
-            initial_date=datetime.strptime("2022-01-15", '%Y-%m-%d'),
-            deadline=datetime.strptime("2022-01-25", '%Y-%m-%d')
-        ),
-    ]
-
-    # Node list generation from tasks
-    # nodes = [Node(task, 1) for task in tasks]
-    
-    # The following mini section is for retrieval of tasks depending on the selected view
-    # These functions must be called by their respective date functions
     
     # ----------------------------------------------
-    # 9.2: Generic Frame Generation
+    # 9.1: Generic Frame Generation
     # ----------------------------------------------
     
     def create_generic_frame(master):
@@ -965,15 +903,23 @@ def create_tasks_page(app):
     # ----------------------------------------------
 
     def create_task_frame(master, task):
-        course_color = {
-            "Course 1": "#FFC080",  # Orange
-            "Course 2": "#C5CAE9",  # Blue
-            # Add more course colors as needed
-        }
+
+        color_done = None
+        task_function = None
+        
+        
+        # Task Status Logic
+        if task.status == TaskStatus.DONE:  
+            color_done = "grey"
+            task_function = lambda: None
+        else:
+            color_done = "floral white"
+            task_function = lambda: somefunction(task)
+            # This is where the function to send the task to the productivity mode will be inserted
 
         task_frame = ctk.CTkFrame(
             master=master,
-            fg_color=course_color.get(task.course_tag, "white"),
+            fg_color=color_done,
             corner_radius=20,
             height=20
         )
@@ -995,25 +941,24 @@ def create_tasks_page(app):
             master=title_frame,
             corner_radius=100,
             text=task.name,
-            fg_color="white",
-            bg_color="white",
+            fg_color=color_done,
+            bg_color=color_done,
             width=20,
             text_color="black",
             font=("Arial", 16),
-            hover_color="#f7f7f7",
+            hover_color=color_done,
             anchor="w",
-            # command=lambda: somefunction(task)
+            command=task_function
         ).grid(row=0, column=0, sticky="w")
 
-    # Course tag button
+        # Course tag button
         course_button = ctk.CTkButton(
             master=title_frame,
             text=task.course_tag,
             fg_color=all_tasks.get_course_color(task.course_tag),  # Button background color
             hover_color=all_tasks.get_course_color(task.course_tag),  # Same color for hover
-            text_color="white",
+            text_color=color_done,
             font=("Arial", 14),
-            command=lambda: None,  # Replace with your desired action
             width=10,
             corner_radius=50
         )
@@ -1035,8 +980,8 @@ def create_tasks_page(app):
         edit_button = ctk.CTkButton(
             master=task_frame,
             corner_radius=100,  
-            fg_color="white",
-            bg_color="white",
+            fg_color=color_done,
+            bg_color=color_done,
             hover_color="#f7f7f7",
             text_color="gray",
             text="...",
@@ -1077,19 +1022,26 @@ def create_tasks_page(app):
         task_title_entry.insert(0, task.name)  # Pre-fill with existing title
         task_title_entry.pack(pady=(0,10))
 
+        date_placeholder = None
+
+        if task.deadline:
+            date_placeholder = task.deadline.date()
+
         # Deadline Date Field
         ttk.Label(frame_edit_task, text="Deadline Date:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         deadline_date_entry = ttk.DateEntry(
             master=frame_edit_task,
             bootstyle="danger",
-            dateformat="%Y-%m-%d"
+            dateformat="%Y-%m-%d",
+            startdate=date_placeholder
         )
-        if task.deadline:
-            deadline_date_entry._startdate = task.deadline  # Pre-fill with existing deadline
         deadline_date_entry.pack(pady=(0,10))
         
+        # Test
+        print(task.deadline)
+        
         # Status Field
-        ttk.Label(frame_edit_task, text="Status:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
+        ttk.Label(frame_edit_task, text="Status: [FOR TESTING ONLY]", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         status_var = tk.StringVar()
         status_var.set(task.status.value)  # Set initial value to task's current status
         status_options = [status.value for status in TaskStatus][:2]
@@ -1219,7 +1171,22 @@ def create_tasks_page(app):
             task.deadline = new_deadline
             task.course_tag = new_course
             task.text_content = new_content
-            task.status = new_status
+            
+            # Determine if task status needs to be updated and handle it
+            # This is only executed if the new status is different from the old status
+            if new_status != task.status:
+                try:
+                    if new_status == TaskStatus.DONE:
+                        all_tasks.courses[new_course].mark_task_complete(task.id)  # Mark as complete
+                    elif new_status == TaskStatus.NOT_DONE:
+                        all_tasks.courses[new_course].mark_task_incomplete(task.id)  # Mark as incomplete
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Updating Task Status", str(e))
+                    return
+            else:
+                # If the status hasn't changed, just update the other task properties
+                task.status = new_status
+
             task.difficulty_rating = new_difficulty_rating
 
             # Update the task in the TaskManager (handling potential course change)
@@ -1231,34 +1198,31 @@ def create_tasks_page(app):
                     # Update the task in the current course
                     all_tasks.courses[new_course].update_task(task)
 
-                # Handle status change - mark as complete/incomplete if needed
-                if new_status == TaskStatus.DONE:
-                    all_tasks.courses[new_course].mark_task_complete(task.id)
-                elif new_status == TaskStatus.NOT_DONE and task.status != TaskStatus.NOT_DONE:
-                    all_tasks.courses[new_course].mark_task_incomplete(task.id)
-
             except ValueError as e:
                 simpledialog.messagebox.showerror("Error Updating Task", str(e))
                 return
-            
-            # Update the task through CourseManager through the TaskManager
-            all_tasks.courses[new_course].update_task(task)
 
             # Refresh task list display
             refresh_task_list(new_course, new_deadline)
 
             # Hide the edit form and show the task list/buttons
             frame_edit_task.pack_forget()
+            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")
             frame_tasks.pack(fill="both", expand=True)
-            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(0, int(screen_height * 0.0046)), side="bottom")
+            
+            # Updates the count of completed tasks
+            # global Tasks_Completed
+            
+            Tasks_Completed.configure(text=f"{all_tasks.get_num_completed_tasks()}")
 
         def cancel_edit():
             """
             Cancels the edit operation and returns to the task list.
             """
             frame_edit_task.pack_forget()
+            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")
+            # frame_button.pack(fill="x", padx=10, pady=(12, 5), side="bottom")
             frame_tasks.pack(fill="both", expand=True)
-            frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(0, int(screen_height * 0.0046)), side="bottom")
 
         # ----------------------------------------------
         # 9.5.3: Button Creation and Layout
@@ -1322,6 +1286,10 @@ def create_tasks_page(app):
     # ==============================================
 
     class TkinterCalendar(Calendar):
+        # ==============================================
+        # Section 12.1.1: Initialization and Task Storage
+        # ==============================================
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.tasks = {}
@@ -1331,12 +1299,19 @@ def create_tasks_page(app):
                 self.tasks[date] = []
             self.tasks[date].append({"name": task_name, "subject": subject, "color": color})
 
+        # ==============================================
+        # Section 12.1.2: Helper Functions
+        # ==============================================
+
         def darken_color(hex_color, factor=0.45):
             hex_color = hex_color.lstrip("#")
             rgb = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
             darkened_rgb = tuple(max(0, int(c * factor)) for c in rgb)
             return "#{:02x}{:02x}{:02x}".format(*darkened_rgb)
 
+        # ==============================================
+        # Section 12.1.3: Monthly View Formatting
+        # ==============================================
 
         def formatmonth(self, master, year, month):
             # Check if the frame exists and destroy it if necessary
@@ -1441,6 +1416,9 @@ def create_tasks_page(app):
 
             return self.frame
 
+        # ==============================================
+        # Section 12.1.4: Weekly View Formatting
+        # ==============================================
 
         def formatweek(self, master, year, month):
             today = datetime.now().date()
@@ -1513,11 +1491,19 @@ def create_tasks_page(app):
 
             return self.container
 
+    # ==============================================
+    # Section 12.2: Calendar Initialization and Display
+    # ==============================================
+
     current_year = datetime.now().year
     current_month = datetime.now().month
     tkcalendar = TkinterCalendar()
     frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
     frame.pack_forget()
+
+    # ==============================================
+    # Section 12.3: Calendar Update Functions
+    # ==============================================
 
     def update_month_calendar():
         global frame, current_month, current_year
@@ -1534,6 +1520,10 @@ def create_tasks_page(app):
         year = tkcalendar.current_week.year
         frame = tkcalendar.formatweek(frame_current_tasks, tkcalendar.current_week.year, tkcalendar.current_week.month)
         frame.pack(pady=10, fill="both", expand=True) 
+
+    # ==============================================
+    # Section 12.4: Navigation Functions
+    # ==============================================
 
     def prev_month():
         global current_year, current_month
@@ -1565,6 +1555,10 @@ def create_tasks_page(app):
             tkcalendar.current_week = datetime.now().date() + timedelta(weeks=1)
         update_week_calendar()
 
+    # ==============================================
+    # Section 12.5: View Switching
+    # ==============================================
+
     current_view = None
 
     def show_month_view():
@@ -1586,6 +1580,10 @@ def create_tasks_page(app):
         update_navigation_buttons() 
         update_week_calendar() 
 
+    # ==============================================
+    # Section 12.6: Navigation Button Update
+    # ==============================================
+
     #so depending on what view we are in, it uses that button
     def update_navigation_buttons():
         if current_view == "month":
@@ -1595,6 +1593,9 @@ def create_tasks_page(app):
             button_prev.configure(command=prev_week)
             button_next.configure(command=next_week)
 
+    # ==============================================
+    # Section 12.7: Sample Tasks
+    # ==============================================
 
     # Sample tasks with descriptions for week view
     tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
@@ -1602,6 +1603,10 @@ def create_tasks_page(app):
     tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
     tkcalendar.name_task(datetime(2024, 12, 8).date(), "Examination", "CMSC 130", "#DC7373")
     tkcalendar.name_task(datetime(2024, 12, 5).date(), "Evaluation", "Ethics", "#90EE90")
+
+    # ==============================================
+    # Section 12.8: Calendar Toggle Function
+    # ==============================================
 
     def toggle_calendar():
         """Toggle the visibility of the calendar frame."""
@@ -1615,9 +1620,4 @@ def create_tasks_page(app):
             elif current_view == "week":
                 update_week_calendar()
 
-
-
-
     return frame_taskpage
-
-
