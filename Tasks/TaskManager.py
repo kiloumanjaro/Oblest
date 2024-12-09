@@ -542,11 +542,13 @@ class TaskManager:
             """
             
             self.next_task_id = 1
+            self.lifetime_tasks = 0
             
             for course_name in self.get_courses():
                 self.ensure_course_color(course_name)
                 course_manager = self.courses[course_name]
                 tasks = course_manager.get_all_tasks()
+                self.lifetime_tasks += len(tasks)
 
                 # Clear the existing skiplist for the current course
                 course_manager.skip_list = SkipList()

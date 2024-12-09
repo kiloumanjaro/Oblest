@@ -773,12 +773,15 @@ def create_tasks_page(app):
         color_done = None
         task_function = None
         
+        
+        # Task Status Logic
         if task.status == TaskStatus.DONE:  
             color_done = "grey"
             task_function = lambda: None
         else:
             color_done = "floral white"
             task_function = lambda: somefunction(task)
+            # This is where the function to send the task to the productivity mode will be inserted
 
         task_frame = ctk.CTkFrame(
             master=master,
@@ -1149,6 +1152,10 @@ def create_tasks_page(app):
     # ==============================================
 
     class TkinterCalendar(Calendar):
+        # ==============================================
+        # Section 12.1.1: Initialization and Task Storage
+        # ==============================================
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.tasks = {}
@@ -1158,12 +1165,19 @@ def create_tasks_page(app):
                 self.tasks[date] = []
             self.tasks[date].append({"name": task_name, "subject": subject, "color": color})
 
+        # ==============================================
+        # Section 12.1.2: Helper Functions
+        # ==============================================
+
         def darken_color(hex_color, factor=0.45):
             hex_color = hex_color.lstrip("#")
             rgb = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
             darkened_rgb = tuple(max(0, int(c * factor)) for c in rgb)
             return "#{:02x}{:02x}{:02x}".format(*darkened_rgb)
 
+        # ==============================================
+        # Section 12.1.3: Monthly View Formatting
+        # ==============================================
 
         def formatmonth(self, master, year, month):
             # Check if the frame exists and destroy it if necessary
@@ -1268,6 +1282,9 @@ def create_tasks_page(app):
 
             return self.frame
 
+        # ==============================================
+        # Section 12.1.4: Weekly View Formatting
+        # ==============================================
 
         def formatweek(self, master, year, month):
             today = datetime.now().date()
@@ -1340,11 +1357,19 @@ def create_tasks_page(app):
 
             return self.container
 
+    # ==============================================
+    # Section 12.2: Calendar Initialization and Display
+    # ==============================================
+
     current_year = datetime.now().year
     current_month = datetime.now().month
     tkcalendar = TkinterCalendar()
     frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
     frame.pack_forget()
+
+    # ==============================================
+    # Section 12.3: Calendar Update Functions
+    # ==============================================
 
     def update_month_calendar():
         global frame, current_month, current_year
@@ -1361,6 +1386,10 @@ def create_tasks_page(app):
         year = tkcalendar.current_week.year
         frame = tkcalendar.formatweek(frame_current_tasks, tkcalendar.current_week.year, tkcalendar.current_week.month)
         frame.pack(pady=10, fill="both", expand=True) 
+
+    # ==============================================
+    # Section 12.4: Navigation Functions
+    # ==============================================
 
     def prev_month():
         global current_year, current_month
@@ -1392,6 +1421,10 @@ def create_tasks_page(app):
             tkcalendar.current_week = datetime.now().date() + timedelta(weeks=1)
         update_week_calendar()
 
+    # ==============================================
+    # Section 12.5: View Switching
+    # ==============================================
+
     current_view = None
 
     def show_month_view():
@@ -1413,6 +1446,10 @@ def create_tasks_page(app):
         update_navigation_buttons() 
         update_week_calendar() 
 
+    # ==============================================
+    # Section 12.6: Navigation Button Update
+    # ==============================================
+
     #so depending on what view we are in, it uses that button
     def update_navigation_buttons():
         if current_view == "month":
@@ -1422,6 +1459,9 @@ def create_tasks_page(app):
             button_prev.configure(command=prev_week)
             button_next.configure(command=next_week)
 
+    # ==============================================
+    # Section 12.7: Sample Tasks
+    # ==============================================
 
     # Sample tasks with descriptions for week view
     tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
@@ -1429,6 +1469,10 @@ def create_tasks_page(app):
     tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
     tkcalendar.name_task(datetime(2024, 12, 8).date(), "Examination", "CMSC 130", "#DC7373")
     tkcalendar.name_task(datetime(2024, 12, 5).date(), "Evaluation", "Ethics", "#90EE90")
+
+    # ==============================================
+    # Section 12.8: Calendar Toggle Function
+    # ==============================================
 
     def toggle_calendar():
         """Toggle the visibility of the calendar frame."""
@@ -1442,9 +1486,4 @@ def create_tasks_page(app):
             elif current_view == "week":
                 update_week_calendar()
 
-
-
-
     return frame_taskpage
-
-
