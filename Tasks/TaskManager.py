@@ -16,34 +16,62 @@ class TaskStatus(Enum):
 class Task:
     id: int
     name: str
-    priority: float
+    
     # reminders: List[str]
     text_content: str
-    course_tag: str
     initial_date: datetime
-
+    
+    completion_date: Optional[datetime] = None
+    course_tag: str = "general"
     deadline: Optional[datetime] = None
     status: TaskStatus = TaskStatus.NOT_DONE
-    difficulty_rating: int = 1 # Default difficulty rating
+    priority: float = 1
+    difficulty_rating: int = 1 # Default difficulty rating, easiest
     
     def calculate_priority(self, current_date: date = None) -> float:
-        if current_date is None:
-            current_date = date.today()
-        
-        priority = self.difficulty_rating * 2
-        
-        if self.deadline:
-            days_until_deadline = (self.deadline.date() - current_date).days
+            """
+            Calculates the priority of a task based on difficulty, deadline, and status.
+
+            Args:
+                current_date: The date to use as the reference for calculations. 
+                            Defaults to the current date.
+
+            Returns:
+                The calculated priority as a float.
+            """
+
+            # if current_date is None:
+            current_date = datetime.now().date()
+                
+
+            priority = self.difficulty_rating * 2  # Base priority based on difficulty
+
+            if self.deadline:
+                days_until_deadline = (self.deadline.date() - current_date).days  # No need to call .date() on deadline
+
+                if days_until_deadline < 0:  # Use < 0 for past deadlines
+                    priority += 20  # Increase priority significantly for overdue tasks
+                    if self.status != TaskStatus.DONE:
+                        self.status = TaskStatus.LATE
+                elif days_until_deadline == 0:
+                    priority += 15
+                    if self.status != TaskStatus.DONE:
+                        self.status = TaskStatus.LATE
+                elif days_until_deadline <= 3:  # Urgent
+                    priority += 10
+                    if self.status != TaskStatus.DONE:
+                        self.status = TaskStatus.LATE  # Or a similar status
+                else:
+                    # Non-linear urgency factor (decreases as deadline gets further)
+                    deadline_factor = 10 / (1 + math.exp(0.5 * (days_until_deadline - 3)))
+                    priority += deadline_factor
             
-            if days_until_deadline <= 0:
-                priority += 10
-                self.status = TaskStatus.LATE
-            else:
-                deadline_factor = 10 / (1 + math.exp(days_until_deadline / 7))
-                priority += deadline_factor
-        
-        self.priority = priority
-        return priority
+            # Adjust priority if task is already completed
+            if self.status == TaskStatus.DONE:
+                priority = 0.0
+
+            self.priority = priority
+            return priority
 
     # Both functions facilitate serialization for YAML
     # Do Not Touch Unless You Know What You're Doing
@@ -262,6 +290,14 @@ class CourseManager:
         """Returns the total number of tasks in the course."""
         return len(self.skip_list)
     
+    def get_all_tasks(self) -> List[Task]:
+        tasks = []
+        current = self.skip_list.header.forward[0]
+        while current:
+            tasks.append(current.task)
+            current = current.forward[0]
+        return tasks
+    
     # Some function here to return the number of completed tasks
     def get_completed_task_count(self) -> int:
         """Returns the number of completed tasks."""
@@ -355,6 +391,8 @@ class TaskManager:
         """Returns a list of all course names."""
         return list(self.courses.keys())
 
+
+
     def load_courses(self) -> None:
         """Load all course managers"""
         for filename in os.listdir(self.storage_dir):
@@ -407,7 +445,7 @@ class TaskManager:
 
     def update_priorities(self) -> None:
         """Update priorities for all tasks if necessary"""
-        today = date.today()
+        today = datetime.now().date()
         if self.last_update_date != today:
             for course in self.courses.values():
                 course.update_priorities(today)
@@ -449,3 +487,8 @@ class TaskManager:
         tasks.sort(key=lambda task: task.priority, reverse=True)  # Sort in descending priority
         return tasks[:top_n] if top_n else tasks
     
+    def get_all_tasks(self) -> List[Task]:
+        all_tasks = []
+        for course in self.courses.values():
+            all_tasks.extend(course.get_all_tasks())
+        return all_tasks

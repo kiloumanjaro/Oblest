@@ -115,10 +115,16 @@ def create_searchable_combobox(master, task_list):
     def hide_listbox(event=None):
         if  not (search_entry.focus_get() or listbox.focus_get()):
             listbox.place_forget()  # Hide the listbox when clicking outside or when mouse leaves
+<<<<<<< HEAD
 
     # Create a frame for the search bar
     search_frame = ctk.CTkFrame(master, fg_color="transparent")
     search_frame.pack(pady=(10, 0), fill="none")
+=======
+    # Create a frame for the search bar
+    search_frame = ctk.CTkFrame(master, fg_color="transparent")
+    search_frame.pack(pady=(10,0), fill="none", side="top")
+>>>>>>> 710b9439308fd565cee85fa70c7734f35c34d0b4
 
     # Search entry (like a search bar)
     search_entry = ctk.CTkEntry(
@@ -151,7 +157,10 @@ def create_searchable_combobox(master, task_list):
     listbox.bind("<<ListboxSelect>>", select_task)
     listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when focus moves out
     listbox.bind("<Leave>", hide_listbox)  # Hide listbox when mouse leaves the listbox
+<<<<<<< HEAD
 
+=======
+>>>>>>> 710b9439308fd565cee85fa70c7734f35c34d0b4
     return search_frame
 
 def create_productivity_page(app):
@@ -169,17 +178,17 @@ def create_productivity_page(app):
     search_bar.pack(pady=(20, 0))
 
     frame_time = ttk.Frame(frame_productivity, bootstyle="info", padding=25)
-    frame_time.pack(fill="x", padx=0, pady=(0,0))
+    frame_time.pack(fill="x", padx=0, pady=0, side="top")
 
-    frame_oble = ttk.Frame(frame_productivity, bootstyle="primary", padding=0)
+    frame_oble = ttk.Frame(frame_productivity, bootstyle="secondary", padding=0)
     frame_oble.configure(style="TFrame")
     frame_oble.pack(pady=0, fill="both", expand=True)
 
     frame_white = ttk.Frame(frame_productivity)
-    frame_white.pack(side="bottom", fill="x")  # A
+    frame_white.pack(fill="x", padx=0, pady=0 ,side="bottom")  # A
 
     frame_button = ttk.Frame(frame_white, bootstyle="primary", padding=0)
-    frame_button.pack(fill="x", padx=10, pady=(0, 9), side="bottom")
+    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
 
 
 # Inside the create_productivity_page function
@@ -215,7 +224,7 @@ def create_productivity_page(app):
     def create_custom_dialog(app, on_ok, on_cancel):
     #Create a new Toplevel window for the dialog
         dialog = tk.Toplevel(app)
-        dialog.title("Set TImer")
+        dialog.title("Set Timer")
         dialog.geometry("480x820")
         dialog.resizable(False, False) 
         dialog.grab_set() #Make the dialog modal

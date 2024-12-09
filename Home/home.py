@@ -43,28 +43,25 @@ def create_home_page(app):
     frame_home = ttk.Frame(app)
     frame_home.pack(fill="both", expand=True)  # Ensure frame_home expands
 
-    screen_width = app.winfo_screenwidth()
-    screen_height = app.winfo_screenheight()
+    frame_controls = ttk.Frame(frame_home, bootstyle="primary", padding=0)
+    frame_controls.pack(fill="x", padx=10, pady=(10, 5), side="top")
 
-    frame_controls = ttk.Frame(frame_home, bootstyle="success", padding=0)
-    frame_controls.pack(fill="x", padx=10, pady=(10, 5))
+    frame_container = ttk.Frame(frame_home, bootstyle="primary", padding=0)
+    frame_container.pack(fill="both", expand="yes", padx=0, pady=0)
 
-    frame_text = ttk.Frame(frame_home, bootstyle="primary", padding=10)
+    frame_text = ttk.Frame(frame_container, bootstyle="primary", padding=10)
     frame_text.pack(fill="x", padx=10, pady=5)
 
-    frame_circle = ttk.Frame(frame_home, bootstyle="primary", padding=15)
+    frame_circle = ttk.Frame(frame_container, bootstyle="primary", padding=15)
     frame_circle.pack(fill="x", padx=10, pady=(10, 2))
 
-    frame_days = ttk.Frame(frame_home, bootstyle="primary", padding=10)
+    frame_days = ttk.Frame(frame_container, bootstyle="primary", padding=10)
     frame_days.pack(fill="x", padx=10, pady=0, anchor="center")
 
-    frame_progress = ttk.Frame(frame_home, bootstyle="primary", padding=(10, 0))
+    frame_progress = ttk.Frame(frame_container, bootstyle="primary", padding=(5, 0))
     frame_progress.pack(fill="x", padx=10, pady=0, anchor="center")
 
-    frame_pages = ttk.Frame(frame_home, padding=5)  # Added definition for frame_pages
-    frame_pages.pack(fill="x", padx=10, pady=10)
-
-    overlay_frame = ttk.Frame(frame_home, bootstyle="primary", padding=10)
+    overlay_frame = ttk.Frame(frame_container, bootstyle="primary", padding=10)
 
     frame_button = ttk.Frame(frame_home, bootstyle="primary", padding=0)
     frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
