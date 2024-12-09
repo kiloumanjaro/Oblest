@@ -191,8 +191,6 @@ def create_archives_page():
     )
     button_1.pack(side="bottom", anchor="s", pady=10)
 
-    return frame_archives
-
     # Start the main event loop
     app.mainloop()
 
