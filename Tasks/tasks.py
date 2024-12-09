@@ -12,7 +12,9 @@ import customtkinter as ctk
 from tkinter import *
 import tkinter as tk
 from tkinter import PhotoImage
-from tkinter import simpledialog, scrolledtext
+from tkinter import simpledialog
+from ttkbootstrap.scrolled import ScrolledText
+
 from datetime import datetime
 from loadingOverlay import *
 
@@ -232,21 +234,21 @@ def create_tasks_page(app):
         # 5.2: Form Field Creation (Modified)
         # ----------------------------------------------
         # Task Title Field
-        ttk.Label(frame_task_form, text="Task Title:").pack(pady=10)
-        task_title_entry = ttk.Entry(frame_task_form, width=50)
-        task_title_entry.pack(pady=10)
+        ttk.Label(frame_task_form, text="Task Title:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
+        task_title_entry = ttk.Entry(frame_task_form, width=50, bootstyle="danger")
+        task_title_entry.pack(pady=(0,10))
 
         # Deadline Date Field
-        ttk.Label(frame_task_form, text="Deadline Date:").pack(pady=10)
+        ttk.Label(frame_task_form, text="Deadline Date:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         deadline_date_entry = ttk.DateEntry(
             master=frame_task_form,
             bootstyle="danger",
             dateformat="%Y-%m-%d"
         )
-        deadline_date_entry.pack(pady=10)
+        deadline_date_entry.pack(pady=(0,10))
 
         # Course Selection Field (Modified)
-        ttk.Label(frame_task_form, text="Course:", font=('Helvetica', 14, 'bold')).pack(pady=10)
+        ttk.Label(frame_task_form, text="Course:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
 
         # Dynamically get courses from TaskManager
         courses = all_tasks.get_courses()
@@ -268,12 +270,22 @@ def create_tasks_page(app):
             dropdown_hover_color="#c4524e",
             border_color="#cf5b58",
         )
-        course_dropdown.pack(pady=10)
+        course_dropdown.pack(pady=(0,10))
+        
+        # Difficulty Rating Slider
+
+        def update_label(val):
+            difficulty_rating_label.configure(text=f"Difficulty Rating: {round(float(val))}", font=('Helvetica', 10, 'bold'))
+        
+        difficulty_rating_label = ttk.Label(frame_task_form, text=f"Difficulty Rating: 1", font=('Helvetica', 10, 'bold'))
+        difficulty_rating_label.pack(pady=(10,10))
+        difficulty_rating_slider = ttk.Scale(frame_task_form, from_=1, to=10, orient="horizontal", command=update_label, bootstyle="danger")
+        difficulty_rating_slider.pack(pady=(0,10))
 
         # Content Field
-        ttk.Label(frame_task_form, text="Content:").pack(pady=10)
-        content_text = scrolledtext.ScrolledText(frame_task_form, width=50, height=10)
-        content_text.pack(pady=10)
+        ttk.Label(frame_task_form, text="Content:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
+        content_text = ScrolledText(frame_task_form, width=50, height=10, bootstyle="danger", autohide=True)
+        content_text.pack(pady=(0,10))
 
         # ----------------------------------------------
         # 5.3: Form Action Functions (Modified)
@@ -324,6 +336,7 @@ def create_tasks_page(app):
                 'name': task_title,
                 'deadline': deadline_date_str,
                 'course_tag': course,
+                'difficulty_rating': round(difficulty_rating_slider.get()),
                 'text_content': content,
                 'initial_date': datetime.today().strftime('%Y-%m-%d'),  # Format as string
                 'status': TaskStatus.NOT_DONE,
@@ -659,9 +672,9 @@ def create_tasks_page(app):
         print(f"Target Date: {target_date}")
 
         if date_offset != 0:
-            tasks = get_tasks_for_day(all_tasks.get_all_tasks(), target_date)
+            tasks = get_tasks_for_day(all_tasks.get_all_tasks_by_priority(), target_date)
         elif given_date:
-            tasks = get_tasks_for_day(all_tasks.get_all_tasks(), given_date)
+            tasks = get_tasks_for_day(all_tasks.get_all_tasks_by_priority(), given_date)
 
         # Safely check for 'general' key
         if all_tasks.courses.get("general"):
@@ -939,13 +952,13 @@ def create_tasks_page(app):
         # 9.5.1: Form Field Creation
         # ----------------------------------------------
         # Task Title Field
-        ttk.Label(frame_edit_task, text="Task Title:").pack(pady=10)
-        task_title_entry = ttk.Entry(frame_edit_task, width=50)
+        ttk.Label(frame_edit_task, text="Task Title:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
+        task_title_entry = ttk.Entry(frame_edit_task, width=50, bootstyle="danger")
         task_title_entry.insert(0, task.name)  # Pre-fill with existing title
-        task_title_entry.pack(pady=10)
+        task_title_entry.pack(pady=(0,10))
 
         # Deadline Date Field
-        ttk.Label(frame_edit_task, text="Deadline Date:").pack(pady=10)
+        ttk.Label(frame_edit_task, text="Deadline Date:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         deadline_date_entry = ttk.DateEntry(
             master=frame_edit_task,
             bootstyle="danger",
@@ -953,10 +966,10 @@ def create_tasks_page(app):
         )
         if task.deadline:
             deadline_date_entry._startdate = task.deadline  # Pre-fill with existing deadline
-        deadline_date_entry.pack(pady=10)
+        deadline_date_entry.pack(pady=(0,10))
         
         # Status Field
-        ttk.Label(frame_edit_task, text="Status:").pack(pady=10)
+        ttk.Label(frame_edit_task, text="Status:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         status_var = tk.StringVar()
         status_var.set(task.status.value)  # Set initial value to task's current status
         status_options = [status.value for status in TaskStatus][:2]
@@ -973,10 +986,10 @@ def create_tasks_page(app):
             dropdown_hover_color="#c4524e",
             border_color="#cf5b58",
         )
-        status_dropdown.pack(pady=10)
+        status_dropdown.pack(pady=(0,10))
 
         # Course Selection Field
-        ttk.Label(frame_edit_task, text="Course:", font=('Helvetica', 14, 'bold')).pack(pady=10)
+        ttk.Label(frame_edit_task, text="Course:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         courses = all_tasks.get_courses()
         if not courses:
             courses = ["general"]
@@ -995,14 +1008,32 @@ def create_tasks_page(app):
             dropdown_hover_color="#c4524e",
             border_color="#cf5b58",
         )
-        course_dropdown.pack(pady=10)
+        course_dropdown.pack(pady=(0,10))
+
+        # Difficulty Rating
+        def update_label(val):
+            difficulty_rating_label.configure(text=f"Difficulty Rating: {round(float(val))}", font=('Helvetica', 10, 'bold'))
+
+        difficulty_rating_label = ttk.Label(frame_edit_task, text=f"Difficulty Rating: {task.difficulty_rating}", font=('Helvetica', 10, 'bold'))
+        difficulty_rating_label.pack(pady=(10,2))
+
+        difficulty_rating_slider = ttk.Scale(
+            frame_edit_task,
+            from_=1,
+            to=10,
+            orient="horizontal",
+            command=update_label,
+            bootstyle="danger"
+        )
+        difficulty_rating_slider.set(task.difficulty_rating)  # Set the initial value from the task
+        difficulty_rating_slider.pack(pady=(0,10))
 
         # Content Field
-        ttk.Label(frame_edit_task, text="Content:").pack(pady=10)
-        content_text = scrolledtext.ScrolledText(frame_edit_task, width=50, height=10)
+        ttk.Label(frame_edit_task, text="Content:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
+        content_text = ScrolledText(frame_edit_task, width=50, height=10, bootstyle="danger")
         content_text.insert("1.0", task.text_content)  # Pre-fill with existing content
-        content_text.pack(pady=10)
-
+        content_text.pack(pady=(0,10))
+        
         # ----------------------------------------------
         # 9.5.2: Form Action Functions
         # ----------------------------------------------
@@ -1019,6 +1050,7 @@ def create_tasks_page(app):
             new_course = course_var.get()
             new_content = content_text.get("1.0", "end-1c")
             new_status_str = status_var.get()
+            new_difficulty_rating = int(difficulty_rating_slider.get())
 
             # Validate deadline date
             try:
@@ -1040,18 +1072,23 @@ def create_tasks_page(app):
                 simpledialog.messagebox.showerror("Invalid Status", "Please select a valid status.")
                 return
 
-            # --- COURSE EXISTENCE CHECK ---
-            while new_course not in all_tasks.get_courses():
-                simpledialog.messagebox.showerror(
-                    "Invalid Course",
-                    f"The course '{new_course}' does not exist. Please select a valid course from the dropdown."
-                )
-                # Re-display the edit form to allow the user to select a valid course
-                # You might need to adjust how you re-display the form based on your UI structure
-                # For example, if you have a separate function to show the edit form:
-                # show_edit_form(task)  
-                # Or, you can simply return here, assuming the form will remain visible:
-                return
+            # --- COURSE EXISTENCE CHECK WITH CONFIRMATION ---
+            if new_course not in all_tasks.get_courses():
+                if not simpledialog.messagebox.askyesno(
+                    "Course Not Found",
+                    f"The course '{new_course}' does not exist. Do you want to create it?"
+                ):
+                    # User chose not to create the course, so return to the form
+                    return
+
+                # User chose to create the course
+                try:
+                    all_tasks.add_course(new_course)
+                    course_dropdown.configure(values=all_tasks.get_courses())  # Update dropdown values
+                    course_var.set(new_course)  # Set the new course as selected
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Creating Course", str(e))
+                    return
             # --- END OF COURSE EXISTENCE CHECK ---
 
             # Store old course tag to help with moving task between courses
@@ -1063,6 +1100,7 @@ def create_tasks_page(app):
             task.course_tag = new_course
             task.text_content = new_content
             task.status = new_status
+            task.difficulty_rating = new_difficulty_rating
 
             # Update the task in the TaskManager (handling potential course change)
             try:
@@ -1082,6 +1120,9 @@ def create_tasks_page(app):
             except ValueError as e:
                 simpledialog.messagebox.showerror("Error Updating Task", str(e))
                 return
+            
+            # Update the task through CourseManager through the TaskManager
+            all_tasks.courses[new_course].update_task(task)
 
             # Refresh task list display
             refresh_task_list(new_course, new_deadline)

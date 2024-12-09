@@ -57,12 +57,12 @@ class Task:
                         self.status = TaskStatus.LATE
                 elif days_until_deadline == 0:
                     priority += 15
-                    if self.status != TaskStatus.DONE:
-                        self.status = TaskStatus.LATE
+                    # if self.status != TaskStatus.DONE:
+                    #     self.status = TaskStatus.LATE
                 elif days_until_deadline <= 3:  # Urgent
                     priority += 10
-                    if self.status != TaskStatus.DONE:
-                        self.status = TaskStatus.LATE  # Or a similar status
+                    # if self.status != TaskStatus.DONE:
+                    #     self.status = TaskStatus.LATE  # Or a similar status
                 else:
                     # Non-linear urgency factor (decreases as deadline gets further)
                     deadline_factor = 10 / (1 + math.exp(0.5 * (days_until_deadline - 3)))
@@ -497,6 +497,14 @@ class TaskManager:
         for course in self.courses.values():
             all_tasks.extend(course.get_all_tasks())
         return all_tasks
+    
+    def get_all_tasks_by_priority(self, top_n: int = None) -> List[Task]:
+        """Retrieve all tasks sorted by priority."""
+        all_tasks = []
+        for course in self.courses.values():
+            all_tasks.extend(course.get_all_tasks())
+        all_tasks.sort(key=lambda task: task.priority, reverse=True)  # Sort in descending priority
+        return all_tasks[:top_n] if top_n else all_tasks
 
     def ensure_course_color(self, course_name: str) -> None:
         """Ensures that a course has a color assigned in the metadata."""
@@ -514,23 +522,26 @@ class TaskManager:
         return f"#{random.randint(0, 0xFFFFFF):06x}"
 
     def reindex_task_ids(self):
-        """
-        Reindexes all task IDs, assigning new IDs based on the current 
-        self.next_task_id counter.
-        """
-        
-        self.next_task_id = 1
-        
-        for course_name in self.get_courses():
-            self.ensure_course_color(course_name)
-            course_manager = self.courses[course_name]
-            tasks = course_manager.get_all_tasks()
+            """
+            Reindexes all task IDs, assigning new IDs based on the current 
+            self.next_task_id counter. Completely clears the existing skiplist for each course
+            before re-inserting tasks with new IDs.
+            """
+            
+            self.next_task_id = 1
+            
+            for course_name in self.get_courses():
+                self.ensure_course_color(course_name)
+                course_manager = self.courses[course_name]
+                tasks = course_manager.get_all_tasks()
 
-            for task in tasks:
-                course_manager.skip_list.remove(task.id)
-                task.id = self.generate_task_id() # Generate and assign new ID, which also updates next_task_id
-                course_manager.skip_list.insert(task)
+                # Clear the existing skiplist for the current course
+                course_manager.skip_list = SkipList()
 
-            course_manager.save() # Save each course after updating its tasks
+                for task in tasks:
+                    task.id = self.generate_task_id() # Generate and assign new ID, which also updates next_task_id
+                    course_manager.skip_list.insert(task) # Insert into the now empty skiplist
 
-        self.save_metadata() # Save metadata once after all tasks are reindexed
+                course_manager.save() # Save each course after updating its tasks
+
+            self.save_metadata() # Save metadata once after all tasks are reindexed
