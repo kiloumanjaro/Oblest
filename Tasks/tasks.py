@@ -51,10 +51,10 @@ def create_tasks_page(app):
     Font = 'Helvetica'
 
     frame_controls = ttk.Frame(frame_taskpage, padding=0)
-    frame_controls.pack(fill="x", padx=10, pady=(10, 5))
+    frame_controls.pack(fill="x", padx=10, pady=(10, 5), side="top")
 
     frame_button = ttk.Frame(frame_taskpage, bootstyle="primary", padding=0)
-    frame_button.pack(fill="x", padx=int(screen_height*0.0093), pady=(0, int(screen_height*0.0046)), side="bottom")
+    frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
 
     left_button_state = BooleanVar(value=False)
     right_button_state = BooleanVar(value=False)
@@ -146,9 +146,18 @@ def create_tasks_page(app):
 
     # overlay_frame = ttk.Frame(frame_taskpage bootstyle="primary", padding=10)
 
-    frame_tasks = ttk.Frame(frame_taskpage, bootstyle="primary", padding=(0, 0, 0, 25))
-    frame_tasks.pack(fill="both", expand=True)
+    frame_tasks = ttk.Frame(frame_taskpage, bootstyle="info", padding=(0, 0, 0, 25))
+    frame_tasks.pack(fill="both", pady=0, expand=True)
 
+    tasks_top = ttk.Frame(frame_tasks, bootstyle="secondary", padding=0)
+    tasks_top.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
+
+    tasks_middle = ttk.Frame(frame_tasks, bootstyle="info", padding=0)
+    tasks_middle.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
+
+    tasks_bottom = ttk.Frame(frame_tasks, bootstyle="dark", padding=0)
+    tasks_bottom.pack(fill="both", expand="yes", padx=20, pady=0, side="top")
+ 
     #frame_overlay = ttk.Frame(frame_taskpage, bootstyle="primary")
     #frame_overlay.place(relx=0.5, y=300, anchor="center", width=150)
 
@@ -329,7 +338,7 @@ def create_tasks_page(app):
 
     # Create a frame to hold the task count text
     frame_task_count = ctk.CTkFrame(
-        master=frame_tasks,
+        master=tasks_top,
         bg_color="transparent",
         fg_color="white",
     )
@@ -339,7 +348,7 @@ def create_tasks_page(app):
     Task_Text = ctk.CTkLabel(
         master=frame_task_count,
         text="You completed",  # Title of task count
-        font=(Font, 16),  # Font style and size
+        font=(Font, 15),  # Font style and size
         fg_color="white",  # Background color
         text_color="#343a40" 
     )
@@ -364,7 +373,7 @@ def create_tasks_page(app):
         text="234",  # Replace with actual number
         bg_color="transparent",  # Background color
         fg_color="#ffffff",  # Foreground color
-        font=(Font, 90),  # Font style and size
+        font=(Font, 85),  # Font style and size
         anchor='w',  # Anchor position
         text_color="#343a40"  # Text color
     )
@@ -376,7 +385,7 @@ def create_tasks_page(app):
         text="tasks",  # Text to display
         bg_color="transparent",  # Background color
         fg_color="#ffffff",  # Foreground color
-        font=(Font, 25),
+        font=(Font, 20),
         anchor='w',  # Anchor position
         text_color="#343a40"  # Text color
     )
@@ -391,7 +400,7 @@ def create_tasks_page(app):
         print(f"Selected option: {option}")
 
     segmented_frame = ctk.CTkFrame(
-        master=frame_tasks, 
+        master=tasks_top, 
         fg_color="white",
         bg_color="transparent"
     )
@@ -405,7 +414,7 @@ def create_tasks_page(app):
     # ==============================================
 
     frame_current_tasks = ctk.CTkScrollableFrame(
-        master=frame_tasks,
+        master=tasks_bottom,
         bg_color="transparent",
         corner_radius=0,
         fg_color="#dcdfe7",
@@ -461,13 +470,13 @@ def create_tasks_page(app):
 
     def create_switcher():
         return ctk.CTkFrame(
-            master=frame_tasks,
+            master=tasks_middle,
             fg_color="white",
             height=20
         )
 
     switcher = create_switcher()
-    switcher.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=False)
+    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=False)
 
     def toggle_switcher(option, default=True, date_offset=0):
         """
@@ -480,7 +489,7 @@ def create_tasks_page(app):
 
         # Pack the frame_current_tasks (only if not already packed)
         if not frame_current_tasks.winfo_ismapped():
-            frame_current_tasks.pack(pady=(0, 5), padx=(12, 18), fill="both", expand=True)
+            frame_current_tasks.pack(pady=(0, 0), padx=(0, 0), fill="both", expand=True)
         
         # Dictionary to map options to functions
         options = {
@@ -588,6 +597,7 @@ def create_tasks_page(app):
 
     def show_day_view(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Populate tasks or show generic message
+        frame_current_tasks._scrollbar.grid()
         target_date = datetime.now().date() + timedelta(days=date_offset)
         print(f"Target Date: {target_date}")
 
@@ -613,12 +623,14 @@ def create_tasks_page(app):
     #     populate_day_view()
 
     def show_week_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
+        frame_current_tasks._scrollbar.grid_forget()
         # Show week view and toggle calendar
         show_week_view()
         toggle_calendar()
 
     def show_month_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Show month view and toggle calendar
+        frame_current_tasks._scrollbar.grid_forget()
         show_month_view()
         toggle_calendar()
 
@@ -884,7 +896,7 @@ def create_tasks_page(app):
                 ttk.Label(
                     self.frame,
                     text=weekday,
-                    font=("Helvetica", 12, "bold"),
+                    font=("Helvetica", 10, "bold"),
                     width=4,
                     anchor="center",
                     bootstyle=SECONDARY
@@ -897,8 +909,8 @@ def create_tasks_page(app):
             for r, week in enumerate(dates, start=1):
                 labels_row = []
                 for c, date in enumerate(week):
-                    cell_frame = ttk.Frame(self.frame, width=50, height=50, bootstyle=PRIMARY)
-                    cell_frame.grid(row=r, column=c, padx=5, pady=25, sticky="nsew")
+                    cell_frame = ttk.Frame(self.frame, width=13, height=13, bootstyle=PRIMARY)
+                    cell_frame.grid(row=r, column=c, padx=3, pady=12, sticky="nsew")
 
                     label = ttk.Label(
                         cell_frame,
@@ -1053,10 +1065,8 @@ def create_tasks_page(app):
         global frame, current_month, current_year
         current_year = datetime.now().year
         current_month = datetime.now().month
-        if header.winfo_exists():
-            header.configure(text=f"{datetime(current_year, current_month, 1):%B %Y}")
         frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
-        frame.pack(pady=20, fill="both", expand=True) 
+        frame.pack(pady=10, fill="both", expand=True) 
 
     def update_week_calendar():
         global frame
@@ -1064,8 +1074,6 @@ def create_tasks_page(app):
             tkcalendar.current_week = datetime.now().date() - timedelta(days=datetime.now().weekday())
         week_number = tkcalendar.current_week.isocalendar()[1]  
         year = tkcalendar.current_week.year
-        if header.winfo_exists():
-            header.configure(text=f"Week {week_number} - {year}")
         frame = tkcalendar.formatweek(frame_current_tasks, tkcalendar.current_week.year, tkcalendar.current_week.month)
         frame.pack(pady=20, fill="both", expand=True) 
 
@@ -1110,8 +1118,6 @@ def create_tasks_page(app):
         frame.pack(pady=20, fill="both", expand=True) 
         update_navigation_buttons()  # Update navigation buttons so that it knows what to switch
         update_month_calendar() 
-        if header.winfo_exists():
-            header.configure(text=f"{datetime(current_year, current_month, 1):%B %Y}") # refreshes to the current month
 
     def show_week_view():
         global current_view, frame
@@ -1130,34 +1136,6 @@ def create_tasks_page(app):
         elif current_view == "week":
             button_prev.configure(command=prev_week)
             button_next.configure(command=next_week)
-
-    #this is for the header and prev & next buttons
-    frame_header = ttk.Frame(frame_current_tasks, bootstyle="primary", padding=5)
-    frame_header.pack(fill="x", padx=10, pady=(10,0))
-
-    button_prev = ttk.Button(
-        frame_header,
-        text="◄",
-        command=prev_month,
-        bootstyle="danger-outline"
-    )
-    button_prev.pack(side="left", padx=10)
-
-    header = ttk.Label(
-        frame_header,
-        text=f"{datetime.now():%B %Y}",
-        font=("Helvetica", 18, "bold"),
-        bootstyle="DANGER"
-    )
-    header.pack(side="left", padx=10, expand=True)
-
-    button_next = ttk.Button(
-        frame_header,
-        text="►",
-        command=next_month,
-        bootstyle="danger-outline"
-    )
-    button_next.pack(side="right", padx=10)
 
 
     # Sample tasks with descriptions for week view
