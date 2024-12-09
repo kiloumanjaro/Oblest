@@ -24,6 +24,10 @@ ASSETS_PATH = OUTPUT_PATH / "assets"
 
 all_tasks = TaskManager()
 
+# Uncomment this following function if wanting to reindex tasks
+# all_tasks.reindex_task_ids()
+
+
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
@@ -872,13 +876,13 @@ def create_tasks_page(app):
         course_button = ctk.CTkButton(
             master=title_frame,
             text=task.course_tag,
-            fg_color="white",  # Button background color
-            hover_color="white",  # Same color for hover
-            text_color="gray",
+            fg_color=all_tasks.get_course_color(task.course_tag),  # Button background color
+            hover_color=all_tasks.get_course_color(task.course_tag),  # Same color for hover
+            text_color="white",
             font=("Arial", 14),
             command=lambda: None,  # Replace with your desired action
             width=10,
-            corner_radius=10
+            corner_radius=50
         )
         course_button.grid(row=0, column=1, sticky="e")
 

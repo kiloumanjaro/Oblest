@@ -12,6 +12,7 @@ class TaskStatus(Enum):
     NOT_DONE = "not_done"
     LATE = "late"
 
+# --- TASK CLASS ---
 @dataclass
 class Task:
     id: int
@@ -27,6 +28,7 @@ class Task:
     status: TaskStatus = TaskStatus.NOT_DONE
     priority: float = 1
     difficulty_rating: int = 1 # Default difficulty rating, easiest
+    course_color: str = "#FFFFFF" # Provide default color here
     
     def calculate_priority(self, current_date: date = None) -> float:
             """
@@ -90,13 +92,18 @@ class Task:
         data['initial_date'] = datetime.strptime(data['initial_date'], '%Y-%m-%d')
         data['deadline'] = datetime.strptime(data['deadline'], '%Y-%m-%d') if data.get('deadline') else None
         
+        # Provide a default color if 'course_color' is missing
+        if 'course_color' not in data:
+            data['course_color'] = "#FFFFFF"  # Default to white
+
+        
         required_fields = ['id', 'name', 'text_content', 'course_tag', 'initial_date']
         for field_name in required_fields:
             if field_name not in data:
                 raise ValueError(f"Missing required field: {field_name}")
             
         return cls(**data)
-
+    
 # Just a node in the skip list that has a task
 class Node:
     def __init__(self, task: Task, height: int):
@@ -191,7 +198,7 @@ class SkipList:
             return x.task
         return None
 
-
+# --- COURSE MANAGER ---
 class CourseManager:
     """Handles operations for a single course's task list"""
     def __init__(self, course_name: str, storage_dir: str):
@@ -209,7 +216,6 @@ class CourseManager:
                 for task_data in tasks_data:
                     task = Task.from_dict(task_data)
                     self.skip_list.insert(task)
-
 
     def save(self) -> None:
         """Save tasks to YAML file"""
@@ -308,7 +314,7 @@ class CourseManager:
         """Returns the number of incomplete tasks."""
         return self.task_amount() - self.completed_tasks
 
-### Should initialize the moment the program starts ###
+# --- TASK MANAGER ---
 class TaskManager:
     """Main task management system"""
     def __init__(self, storage_dir: str = "courses"):
@@ -317,6 +323,7 @@ class TaskManager:
         self.last_update_date = None
         self.lifetime_tasks = 0
         self.next_task_id = 1  # To generate unique task IDs
+        self.course_colors: Dict[str, str] = {} # {course_name: color}
         self.load_next_task_id()
         
         # Ensure storage directory exists
@@ -332,32 +339,30 @@ class TaskManager:
             with open(metadata_path, 'r') as f:
                 metadata = yaml.safe_load(f)
                 self.next_task_id = metadata.get('next_task_id', 1) # Default to 1 if not found
-                
+
     def load_metadata(self) -> None:
         metadata_path = os.path.join(self.storage_dir, "metadata.yaml")
         if os.path.exists(metadata_path):
             with open(metadata_path, 'r') as f:
                 metadata = yaml.safe_load(f) or {}
-                last_update_str = metadata.get('last_update')
-                if last_update_str:
-                    self.last_update_date = datetime.strptime(last_update_str, '%Y-%m-%d').date()
-                else:
-                    self.last_update_date = date.today()
+                self.last_update_date = datetime.strptime(metadata.get('last_update'), '%Y-%m-%d').date() if metadata.get('last_update') else date.today()
                 self.next_task_id = metadata.get('next_task_id', 1)
                 self.lifetime_tasks = metadata.get('lifetime_tasks', 0)
+                self.course_colors = metadata.get('course_colors', {})
         else:
             self.last_update_date = date.today()
             self.next_task_id = 1
             self.lifetime_tasks = 0
+            self.course_colors = {}
             self.save_metadata()
 
-    
     def save_metadata(self) -> None:
         """Save metadata including next task ID."""
         metadata = {
             'last_update': self.last_update_date.strftime('%Y-%m-%d'),
             'next_task_id': self.next_task_id,
-            'lifetime_tasks': self.lifetime_tasks
+            'lifetime_tasks': self.lifetime_tasks,
+            'course_colors': self.course_colors
         }
         metadata_path = os.path.join(self.storage_dir, "metadata.yaml")
         with open(metadata_path, 'w') as f:
@@ -375,6 +380,7 @@ class TaskManager:
         if course_name == "":
             course_name = "general"
         self.courses[course_name] = CourseManager(course_name, self.storage_dir)
+        self.ensure_course_color(course_name) # Ensure color is assigned
         self.save_all()  # Save the new course to disk
 
     def remove_course(self, course_name: str) -> None:
@@ -383,6 +389,8 @@ class TaskManager:
             raise ValueError(f"Course '{course_name}' not found.")
 
         del self.courses[course_name]  # Remove from memory
+        if course_name in self.course_colors:
+            del self.course_colors[course_name]  # Remove color mapping
         filepath = os.path.join(self.storage_dir, f"{course_name}.yaml")
         if os.path.exists(filepath):
             os.remove(filepath)  # Remove from disk
@@ -390,8 +398,6 @@ class TaskManager:
     def get_courses(self) -> List[str]:
         """Returns a list of all course names."""
         return list(self.courses.keys())
-
-
 
     def load_courses(self) -> None:
         """Load all course managers"""
@@ -401,14 +407,14 @@ class TaskManager:
                 self.courses[course_name] = CourseManager(
                     course_name, self.storage_dir
                 )
-    
+
     def generate_task_id(self) -> int:
         """Generate a unique task ID."""
         task_id = self.next_task_id
         self.next_task_id += 1
         self.save_metadata()  # Save updated ID immediately
         return task_id
-    
+
     def add_task(self, course_name: str, task_data: dict) -> Task:
         """Adds a task to a course."""
         if course_name == "":
@@ -416,12 +422,12 @@ class TaskManager:
             task_data['course_tag'] = course_name
         else:
             task_data['course_tag'] = course_name  # Ensure correct course tag
-            
+
         if course_name not in self.courses:
             self.courses[course_name] = CourseManager(course_name, self.storage_dir)
 
         task_data['id'] = self.generate_task_id()  # Assign a unique ID
-
+        task_data['course_color'] = self.get_course_color(course_name)
 
         task = Task.from_dict(task_data)
         task.calculate_priority()
@@ -437,11 +443,11 @@ class TaskManager:
         if task:
             self.courses[from_course].remove_task(task_id)
             task.course_tag = to_course or "general"
+            task.course_color = self.get_course_color(to_course)
             self.courses[to_course].insert_task(task)
             self.save_all()
             return True
         return False
-
 
     def update_priorities(self) -> None:
         """Update priorities for all tasks if necessary"""
@@ -452,7 +458,7 @@ class TaskManager:
             self.last_update_date = today
             self.save_metadata()
             self.save_all()
-    
+
     # Some function here that to retrieve a list of tasks depending upon the deadline. 
     def get_tasks_by_deadline(self, course_name: str, days: int) -> List[Task]:
         """Retrieve tasks with deadlines within the specified number of days."""
@@ -472,7 +478,6 @@ class TaskManager:
             current = current.forward[0]
         return deadline_tasks
 
-    
     # Some Function here that retrieves tasks based on priority.
     def get_tasks_by_priority(self, course_name: str, top_n: int = None) -> List[Task]:
         """Retrieve tasks sorted by priority."""
@@ -486,9 +491,46 @@ class TaskManager:
             current = current.forward[0]
         tasks.sort(key=lambda task: task.priority, reverse=True)  # Sort in descending priority
         return tasks[:top_n] if top_n else tasks
-    
+
     def get_all_tasks(self) -> List[Task]:
         all_tasks = []
         for course in self.courses.values():
             all_tasks.extend(course.get_all_tasks())
         return all_tasks
+
+    def ensure_course_color(self, course_name: str) -> None:
+        """Ensures that a course has a color assigned in the metadata."""
+        if course_name not in self.course_colors:
+            self.course_colors[course_name] = self.generate_random_color()
+            self.save_metadata()
+
+    def get_course_color(self, course_name: str) -> str:
+        """Retrieves the color for a course. Generates one if it doesn't exist."""
+        self.ensure_course_color(course_name)
+        return self.course_colors[course_name]
+
+    def generate_random_color(self) -> str:
+        """Generates a random hex color code."""
+        return f"#{random.randint(0, 0xFFFFFF):06x}"
+
+    def reindex_task_ids(self):
+        """
+        Reindexes all task IDs, assigning new IDs based on the current 
+        self.next_task_id counter.
+        """
+        
+        self.next_task_id = 1
+        
+        for course_name in self.get_courses():
+            self.ensure_course_color(course_name)
+            course_manager = self.courses[course_name]
+            tasks = course_manager.get_all_tasks()
+
+            for task in tasks:
+                course_manager.skip_list.remove(task.id)
+                task.id = self.generate_task_id() # Generate and assign new ID, which also updates next_task_id
+                course_manager.skip_list.insert(task)
+
+            course_manager.save() # Save each course after updating its tasks
+
+        self.save_metadata() # Save metadata once after all tasks are reindexed
