@@ -8,6 +8,7 @@ from tkinter import simpledialog
 from PIL import Image, ImageTk
 import time
 from tkinter import messagebox
+import random
 # from fuzzywuzzy import process 
 
 OUTPUT_PATH = Path(__file__).parent
@@ -22,34 +23,102 @@ timer_end_time = 0  # Timer end time
 tasks = ["Task1", "Task2", "Task3"]
 remaining_time = 0
 
+class Node:
+    def __init__(self, key=None, level=0):
+        self.key = key
+        self.forward = [None] * (level + 1)
+
+class Skiplist:
+    def __init__(self, max_level=16, p=0.5):
+        self.max_level = max_level
+        self.p = p
+        self.header = Node(level=max_level)
+        self.level = 0
+
+    def random_level(self):
+        lvl = 0
+        while random.random() < self.p and lvl < self.max_level:
+            lvl += 1
+        return lvl
+
+    def insert(self, key):
+        update = [None] * (self.max_level + 1)
+        current = self.header
+
+        for i in range(self.level, -1, -1):
+            while current.forward[i] and current.forward[i].key < key:
+                current = current.forward[i]
+            update[i] = current
+
+        lvl = self.random_level()
+        if lvl > self.level:
+            for i in range(self.level + 1, lvl + 1):
+                update[i] = self.header
+            self.level = lvl
+
+        new_node = Node(key, lvl)
+        for i in range(lvl + 1):
+            new_node.forward[i] = update[i].forward[i]
+            update[i].forward[i] = new_node
+
+    def search(self, key):
+        current = self.header
+        for i in range(self.level, -1, -1):
+            while current.forward[i] and current.forward[i].key < key:
+                current = current.forward[i]
+
+        current = current.forward[0]
+        return current and current.key == key
+
+    def get_keys_starting_with(self, prefix):
+        current = self.header
+        while current.forward[0] and not current.forward[0].key.startswith(prefix):
+            current = current.forward[0]
+
+        results = []
+        while current.forward[0] and current.forward[0].key.startswith(prefix):
+            current = current.forward[0]
+            results.append(current.key)
+        return results
+
+task_skiplist = Skiplist()
+
+for task in tasks:
+    task_skiplist.insert(task) #inserts the tasks in the skiplist
+
 def create_searchable_combobox(master, task_list):
     def filter_tasks(event):
-        query = search_entry.get().lower()
-        filtered = [task for task in task_list if query in task.lower()]
+        query = search_entry.get().lower()  # Get the lowercase version of the query
+        filtered = task_skiplist.get_keys_starting_with(query) # Filter tasks that contain the query (case-insensitive)
         update_listbox(filtered)
 
     def update_listbox(filtered_tasks):
-        listbox.delete(0, tk.END)
-        for task in filtered_tasks:
-            listbox.insert(tk.END, task)
-
-        if filtered_tasks:
+        listbox.delete(0, tk.END)  # Clear the listbox before inserting new items
+        if filtered_tasks:  # Only show the listbox if there are matching tasks
+            for task in filtered_tasks:
+                listbox.insert(tk.END, task)
             listbox.place(x=search_entry.winfo_x(), y=search_entry.winfo_y() + search_entry.winfo_height() + 5, width=search_entry.winfo_width())
         else:
-            listbox.place_forget()
+            listbox.place_forget()  # Hide the listbox if no tasks match
 
     def select_task(event):
-        selected = listbox.get(listbox.curselection())
-        search_entry.delete(0, tk.END)
-        search_entry.insert(0, selected)
-        listbox.place_forget()  # Hide listbox after selection
+        selected = listbox.get(listbox.curselection())  # Get the selected task
+        search_entry.delete(0, tk.END)  # Clear the entry field
+        search_entry.insert(0, selected)  # Insert the selected task into the entry field
+        listbox.place_forget()  # Hide the listbox after selection
 
+    def select_first_task(event):
+        if listbox.size() > 0:  # Ensure there are items in the listbox
+            listbox.select_set(0)  # Select the first item in the listbox
+            select_task(event)  # Simulate selecting that task
+            
     def hide_listbox(event=None):
-        listbox.place_forget()  # Hide the listbox when clicking outside or pressing Escape
+        if  not (search_entry.focus_get() or listbox.focus_get()):
+            listbox.place_forget()  # Hide the listbox when clicking outside or when mouse leaves
 
     # Create a frame for the search bar
     search_frame = ctk.CTkFrame(master, fg_color="transparent")
-    search_frame.pack(pady=(10,0), fill="none")
+    search_frame.pack(pady=(10, 0), fill="none")
 
     # Search entry (like a search bar)
     search_entry = ctk.CTkEntry(
@@ -59,13 +128,14 @@ def create_searchable_combobox(master, task_list):
         fg_color="white",  # Set the background color of the search bar
         text_color="#A4ADBD",  # Set the text color
         border_color="white",  # Set border color for a subtle effect
-        corner_radius=20,      # Rounded edges for a better look
-        width= 300,  # Set width in pixels
-        height=40   # Set height in pixels
+        corner_radius=20,  # Rounded edges for a better look
+        width=300,  # Set width in pixels
+        height=40  # Set height in pixels
     )
     search_entry.pack(padx=10, pady=5, fill="x")
     search_entry.bind("<KeyRelease>", filter_tasks)  # Filter tasks as you type
     search_entry.bind("<FocusOut>", hide_listbox)  # Hide listbox when losing focus
+    search_entry.bind("<Return>", select_first_task)  # Bind Enter key to select the first task
 
     # Listbox for search results (overlay style)
     listbox = tk.Listbox(
@@ -73,13 +143,14 @@ def create_searchable_combobox(master, task_list):
         height=5,
         font=("Arial", 12),
         relief=tk.FLAT,  # No border
-        fg="white",      # Updated text color
+        fg="white",  # Updated text color
         highlightthickness=1,
         selectbackground="#BA5757",  # Selection highlight
-        selectforeground="white"   # Text color for selection
+        selectforeground="white"  # Text color for selection
     )
     listbox.bind("<<ListboxSelect>>", select_task)
-    listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when it loses focus
+    listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when focus moves out
+    listbox.bind("<Leave>", hide_listbox)  # Hide listbox when mouse leaves the listbox
 
     return search_frame
 
@@ -95,6 +166,7 @@ def create_productivity_page(app):
     frame_productivity.pack(fill="both", expand=True, pady=0)
 
     search_bar = create_searchable_combobox(frame_productivity, tasks)
+    search_bar.pack(pady=(20, 0))
 
     frame_time = ttk.Frame(frame_productivity, bootstyle="info", padding=25)
     frame_time.pack(fill="x", padx=0, pady=(0,0))
