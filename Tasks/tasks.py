@@ -146,13 +146,13 @@ def create_tasks_page(app):
 
     # overlay_frame = ttk.Frame(frame_taskpage bootstyle="primary", padding=10)
 
-    frame_tasks = ttk.Frame(frame_taskpage, bootstyle="info", padding=(0, 0, 0, 25))
+    frame_tasks = ttk.Frame(frame_taskpage, bootstyle="primary", padding=(0, 0, 0, 25))
     frame_tasks.pack(fill="both", pady=0, expand=True)
 
-    tasks_top = ttk.Frame(frame_tasks, bootstyle="secondary", padding=0)
+    tasks_top = ttk.Frame(frame_tasks, bootstyle="primary", padding=0)
     tasks_top.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
 
-    tasks_middle = ttk.Frame(frame_tasks, bootstyle="info", padding=0)
+    tasks_middle = ttk.Frame(frame_tasks, bootstyle="primary", padding=0)
     tasks_middle.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
 
     tasks_bottom = ttk.Frame(frame_tasks, bootstyle="dark", padding=0)
@@ -461,6 +461,16 @@ def create_tasks_page(app):
     # Initially hide the frame (it will only appear when "Day" is selected)
     frame_current_tasks.pack(pady=0, padx=(12, 18), fill="both", side="bottom", expand=YES)
 
+    original_scrollbar_grid_info = frame_current_tasks._scrollbar.grid_info()
+
+    def toggle_scrollbar(enable):
+        if enable:
+            # Restore the scrollbar to its original position
+            frame_current_tasks._scrollbar.grid(**original_scrollbar_grid_info)
+        else:
+            # Hide the scrollbar
+            frame_current_tasks._scrollbar.grid_forget()
+
     # ----------------------------------------------
     # Helper Functions: Gets tasks for day, week, month
     # ----------------------------------------------
@@ -632,7 +642,7 @@ def create_tasks_page(app):
 
     def show_day_view(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Populate tasks or show generic message
-        frame_current_tasks._scrollbar.grid()
+        toggle_scrollbar(True) 
         target_date = datetime.now().date() + timedelta(days=date_offset)
         print(f"Target Date: {target_date}")
 
@@ -658,14 +668,14 @@ def create_tasks_page(app):
     #     populate_day_view()
 
     def show_week_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
-        frame_current_tasks._scrollbar.grid_forget()
+        toggle_scrollbar(False)
         # Show week view and toggle calendar
         show_week_view()
         toggle_calendar()
 
     def show_month_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Show month view and toggle calendar
-        frame_current_tasks._scrollbar.grid_forget()
+        toggle_scrollbar(False)
         show_month_view()
         toggle_calendar()
 
