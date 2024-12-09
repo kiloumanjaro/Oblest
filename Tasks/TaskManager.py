@@ -29,23 +29,49 @@ class Task:
     difficulty_rating: int = 1 # Default difficulty rating, easiest
     
     def calculate_priority(self, current_date: date = None) -> float:
-        if current_date is None:
-            current_date = date.today()
-        
-        priority = self.difficulty_rating * 2
-        
-        if self.deadline:
-            days_until_deadline = (self.deadline.date() - current_date).days
+            """
+            Calculates the priority of a task based on difficulty, deadline, and status.
+
+            Args:
+                current_date: The date to use as the reference for calculations. 
+                            Defaults to the current date.
+
+            Returns:
+                The calculated priority as a float.
+            """
+
+            # if current_date is None:
+            current_date = datetime.now().date()
+                
+
+            priority = self.difficulty_rating * 2  # Base priority based on difficulty
+
+            if self.deadline:
+                days_until_deadline = (self.deadline.date() - current_date).days  # No need to call .date() on deadline
+
+                if days_until_deadline < 0:  # Use < 0 for past deadlines
+                    priority += 20  # Increase priority significantly for overdue tasks
+                    if self.status != TaskStatus.DONE:
+                        self.status = TaskStatus.LATE
+                elif days_until_deadline == 0:
+                    priority += 15
+                    if self.status != TaskStatus.DONE:
+                        self.status = TaskStatus.LATE
+                elif days_until_deadline <= 3:  # Urgent
+                    priority += 10
+                    if self.status != TaskStatus.DONE:
+                        self.status = TaskStatus.LATE  # Or a similar status
+                else:
+                    # Non-linear urgency factor (decreases as deadline gets further)
+                    deadline_factor = 10 / (1 + math.exp(0.5 * (days_until_deadline - 3)))
+                    priority += deadline_factor
             
-            if days_until_deadline <= 0:
-                priority += 10
-                self.status = TaskStatus.LATE
-            else:
-                deadline_factor = 10 / (1 + math.exp(days_until_deadline / 7))
-                priority += deadline_factor
-        
-        self.priority = priority
-        return priority
+            # Adjust priority if task is already completed
+            if self.status == TaskStatus.DONE:
+                priority = 0.0
+
+            self.priority = priority
+            return priority
 
     # Both functions facilitate serialization for YAML
     # Do Not Touch Unless You Know What You're Doing
@@ -419,7 +445,7 @@ class TaskManager:
 
     def update_priorities(self) -> None:
         """Update priorities for all tasks if necessary"""
-        today = date.today()
+        today = datetime.now().date()
         if self.last_update_date != today:
             for course in self.courses.values():
                 course.update_priorities(today)
