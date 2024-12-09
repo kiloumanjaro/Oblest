@@ -473,10 +473,10 @@ def create_tasks_page(app):
         master=tasks_bottom,
         bg_color="transparent",
         corner_radius=0,
-        fg_color="#dcdfe7",
+        fg_color="white",
         height = 390,
         border_color="#FFFFFF",
-        scrollbar_button_color="#dcdfe7",       # Default color of scrollbar button     
+        scrollbar_button_color="white",       # Default color of scrollbar button     
         scrollbar_button_hover_color="#555555"
     )
     # Initially hide the frame (it will only appear when "Day" is selected)
@@ -777,7 +777,7 @@ def create_tasks_page(app):
             color_done = "grey"
             task_function = lambda: None
         else:
-            color_done = "white"
+            color_done = "floral white"
             task_function = lambda: somefunction(task)
 
         task_frame = ctk.CTkFrame(
