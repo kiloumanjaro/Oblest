@@ -496,39 +496,53 @@ def create_tasks_page(app):
     # Helper Functions: Gets tasks for day, week, month
     # ----------------------------------------------
    
-    def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
+    def get_tasks_in_range(tasks: list[Task], start: datetime, end: datetime, exact_deadline: bool = False) -> list[Task]:
         relevant_tasks = []
         for task in tasks:
-            target_day = task.deadline.date()
-            if target_day == selected_date:
-                relevant_tasks.append(task)
-        return relevant_tasks
-    
-    def get_tasks_for_week(tasks: list[Task], start_of_week: datetime) -> list[Task]:
-        end_of_week = start_of_week + timedelta(days=6)
-        relevant_tasks = []
-        for task in tasks:
-            start = task.initial_date.date()
-            end = task.deadline.date() if task.deadline else start
-            if start <= end_of_week and end >= start_of_week:
-                relevant_tasks.append(task)
-        return relevant_tasks
-    
-    def get_tasks_for_month(tasks: list[Task], year: int, month: int) -> list[Task]:
-        # Calculate start and end of the month
-        start_of_month = datetime(year, month, 1)
-        if month == 12:
-            end_of_month = datetime(year + 1, 1, 1) - timedelta(days=1)
-        else:
-            end_of_month = datetime(year, month + 1, 1) - timedelta(days=1)
+            if exact_deadline:
+                # Day view: strictly match the deadline date
+                if task.deadline and task.deadline.date() == start:
+                    relevant_tasks.append(task)
+            else:
+                # Week/Month view: check if the task overlaps the given date range
+                task_start = task.initial_date.date()
+                task_end = task.deadline.date() if task.deadline else task_start
+                # Include tasks that fall within or intersect the given start-end range
+                if task_start <= end and task_end >= start:
+                    relevant_tasks.append(task)
 
-        relevant_tasks = []
-        for task in tasks:
-            start = task.initial_date.date()
-            end = task.deadline.date() if task.deadline else start
-            if start <= end_of_month and end >= start_of_month:
-                relevant_tasks.append(task)
         return relevant_tasks
+
+    def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
+        # As defined before, returns tasks that have a deadline exactly on selected_date
+        return [task for task in tasks if task.deadline and task.deadline.date() == selected_date]
+
+    def get_tasks_for_week_dict(tasks: list[Task], start_of_week: datetime) -> dict:
+        """Returns a dictionary of tasks keyed by day for the given week."""
+        week_tasks = {}
+        for i in range(7):  # 7 days in a week
+            current_date = start_of_week + timedelta(days=i)
+            week_tasks[current_date.date()] = get_tasks_for_day(tasks, current_date)
+        return week_tasks
+
+    def get_tasks_for_month_dict(tasks: list[Task], year: int, month: int) -> dict:
+        # Calculate the number of days in the month
+        if month == 12:
+            start_of_month = datetime(year, month, 1)
+            end_of_month = datetime(year+1, 1, 1) - timedelta(days=1)
+        else:
+            start_of_month = datetime(year, month, 1)
+            end_of_month = datetime(year, month+1, 1) - timedelta(days=1)
+
+        # Generate a dictionary mapping each day to its tasks
+        month_tasks = {}
+        current_date = start_of_month
+        while current_date <= end_of_month:
+            month_tasks[current_date.date()] = get_tasks_for_day(tasks, current_date)
+            current_date += timedelta(days=1)
+
+        return month_tasks
+
 
     # ----------------------------------------------
     # Week, Month, Day button functionality
