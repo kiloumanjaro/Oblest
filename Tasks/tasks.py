@@ -210,7 +210,7 @@ def create_tasks_page(app):
     # Section 5: Task Form Functions and Creation (Modified)
     # ==============================================
     
-    def refresh_task_list():
+    def refresh_task_list(course_option, given_deadline):
         """
         Refreshes the task list displayed in the UI.
         This is a placeholder function. You need to implement the actual logic
@@ -219,6 +219,7 @@ def create_tasks_page(app):
         """
         print("Refreshing task list...")
         toggle_switcher("Day", default=True)
+        all_tasks.courses[course_option].update_priorities(given_deadline)
         # Example steps (replace with your actual UI update logic):
         # 1. Clear your existing task list widget.
         # 2. Get the updated list of tasks from all_tasks (your TaskManager).
@@ -323,7 +324,7 @@ def create_tasks_page(app):
                 return
 
             # Refresh task list display (You'll need to implement this function)
-            refresh_task_list()
+            refresh_task_list(course, deadline_date_str)
 
             # Hide the form and show the task list/buttons
             frame_task_form.pack_forget()
@@ -478,7 +479,7 @@ def create_tasks_page(app):
     def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
         relevant_tasks = []
         for task in tasks:
-            target_day = task.initial_date.date()
+            target_day = task.deadline.date()
             if target_day == selected_date:
                 relevant_tasks.append(task)
         return relevant_tasks
@@ -830,7 +831,7 @@ def create_tasks_page(app):
             master=master,
             fg_color=course_color.get(task.course_tag, "white"),
             corner_radius=20,
-            height=105
+            height=20
         )
         task_frame.pack(pady=(8, 8), padx=(22, 5), fill=tk.X, side="top", expand=tk.YES)
 
@@ -839,27 +840,41 @@ def create_tasks_page(app):
             master=task_frame,
             fg_color="transparent"  # Make the frame transparent to blend with the parent
         )
-        title_frame.pack(fill=tk.X, padx=(20, 20), pady=(10, 10))
+        title_frame.pack(fill=tk.X, padx=(10, 20), pady=(10, 10))
 
         # Create a grid layout for the title frame
         title_frame.grid_columnconfigure(0, weight=1)
         title_frame.grid_columnconfigure(1, weight=1)
 
         # Task name label
-        ctk.CTkLabel(
+        ctk.CTkButton(
             master=title_frame,
+            corner_radius=100,
             text=task.name,
+            fg_color="white",
+            bg_color="white",
+            width=20,
             text_color="black",
-            font=("Arial", 16)
+            font=("Arial", 16),
+            hover_color="#f7f7f7",
+            anchor="w",
+            command=lambda: None
         ).grid(row=0, column=0, sticky="w")
 
-        # Course tag label
-        ctk.CTkLabel(
+    # Course tag button
+        course_button = ctk.CTkButton(
             master=title_frame,
             text=task.course_tag,
+            fg_color="white",  # Button background color
+            hover_color="white",  # Same color for hover
             text_color="gray",
-            font=("Arial", 14)
-        ).grid(row=0, column=1, sticky="e")
+            font=("Arial", 14),
+            command=lambda: None,  # Replace with your desired action
+            width=10,
+            corner_radius=10
+        )
+        course_button.grid(row=0, column=1, sticky="e")
+
 
         # Text content label
         text_content_label = ctk.CTkLabel(
@@ -869,8 +884,25 @@ def create_tasks_page(app):
             font=("Arial", 14),
             anchor="w"  # Align text content to the left
         )
-        text_content_label.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        text_content_label.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=(10,0))
         title_frame.grid_rowconfigure(1, weight=1)
+        
+        # Edit button (three dots)
+        edit_button = ctk.CTkButton(
+            master=task_frame,
+            corner_radius=100,  
+            fg_color="white",
+            bg_color="white",
+            hover_color="#f7f7f7",
+            text_color="gray",
+            text="...",
+            width=20,  # Adjust width as needed
+            height=20,
+            font=("Arial", 10),
+            command=lambda: None  # Empty command for now
+        )
+        # Place at bottom-right corner, accounting for padding/margins
+        edit_button.place(relx=1.0, rely=1.0, x=-10, y=-10, anchor="se")
             
     # ----------------------------------------------
     # 9.4: Frame Creation Logic | SHOWS UP BY DEFAULT AT START OF PROGRAM
