@@ -9,10 +9,13 @@ from PIL import Image, ImageTk
 import time
 from tkinter import messagebox
 import random
-# from fuzzywuzzy import process 
+from Tasks import TaskManager
+
+
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / "assets"
+GIF_PATH = OUTPUT_PATH / "OBLE GIF"
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -89,7 +92,7 @@ for task in tasks:
 def create_searchable_combobox(master, task_list):
     def filter_tasks(event):
         query = search_entry.get().lower()  # Get the lowercase version of the query
-        filtered = task_skiplist.get_keys_starting_with(query) # Filter tasks that contain the query (case-insensitive)
+        filtered = task_skiplist.get_keys_starting_with(query)  # Filter tasks that contain the query (case-insensitive)
         update_listbox(filtered)
 
     def update_listbox(filtered_tasks):
@@ -97,7 +100,11 @@ def create_searchable_combobox(master, task_list):
         if filtered_tasks:  # Only show the listbox if there are matching tasks
             for task in filtered_tasks:
                 listbox.insert(tk.END, task)
-            listbox.place(x=search_entry.winfo_x(), y=search_entry.winfo_y() + search_entry.winfo_height() + 5, width=search_entry.winfo_width())
+            listbox_height = min(len(filtered_tasks), 5)
+            listbox.config(height=listbox_height)
+            # Ensure the listbox is visible while matching tasks are found
+            if listbox.winfo_ismapped() == 0:  # If the listbox is not currently visible
+                listbox.place(x=search_entry.winfo_x(), y=search_entry.winfo_y() + search_entry.winfo_height() + 5, width=search_entry.winfo_width())
         else:
             listbox.place_forget()  # Hide the listbox if no tasks match
 
@@ -111,9 +118,9 @@ def create_searchable_combobox(master, task_list):
         if listbox.size() > 0:  # Ensure there are items in the listbox
             listbox.select_set(0)  # Select the first item in the listbox
             select_task(event)  # Simulate selecting that task
-            
+
     def hide_listbox(event=None):
-        if  not (search_entry.focus_get() or listbox.focus_get()):
+        if not (search_entry.focus_get() or listbox.focus_get()):
             listbox.place_forget()  # Hide the listbox when clicking outside or when mouse leaves
     # Create a frame for the search bar
     search_frame = ctk.CTkFrame(master, fg_color="transparent")
@@ -151,6 +158,7 @@ def create_searchable_combobox(master, task_list):
     listbox.bind("<FocusOut>", hide_listbox)  # Hide listbox when focus moves out
     listbox.bind("<Leave>", hide_listbox)  # Hide listbox when mouse leaves the listbox
     return search_frame
+    #return search_entry
 
 def create_productivity_page(app):
     app.configure(bg="#DC7373")
@@ -202,13 +210,38 @@ def create_productivity_page(app):
     breaks_label = tk.Label(frame_time, text=f"Breaks remaining: {breaks_remaining}", font=("Helvetica", 10))
     breaks_label.pack(pady=0)
 
-    oble_icon_label = tk.Label( #Using this one first as reference to the screen,then proceed with the simulation of progression
+    ''' oble_icon_label = tk.Label( #Using this one first as reference to the screen,then proceed with the simulation of progression
         frame_oble,
         image=oble_icon,
         bg="white"
     )
     oble_icon_label.image = oble_icon  # Keep a reference to the image
-    oble_icon_label.pack(pady=10, fill="both", expand=True)
+    oble_icon_label.pack(pady=10, fill="both", expand=True) '''
+
+        # Frame for the animated images
+    animation_label = tk.Label(frame_oble, bg="white")
+    animation_label.pack(pady=10, fill="both", expand=True)
+
+    def load_and_sort_images():
+        # Load images from the "assets/images" folder
+        image_dir = OUTPUT_PATH / "OBLE GIF"  # Adjust the path as needed
+        image_files = sorted(image_dir.glob("*.png"))  # Sort images alphabetically
+        images = [ImageTk.PhotoImage(Image.open(img).resize((300, 300))) for img in image_files]
+        return images
+
+    images = load_and_sort_images()
+
+    def animate_images(index=0, delay=100):
+        if not images:
+            return  # If no images, skip animation
+        if timer_running:
+            animation_label.config(image=images[index])
+            app.after(delay, animate_images, (index + 1) % len(images), delay)  # Change image every 100ms
+        else:
+            # Stops the animation once the last image is shown
+            animation_label.config(image=images[-1])
+    # Start the animation
+    #animate_images()
 
     def create_custom_dialog(app, on_ok, on_cancel):
     #Create a new Toplevel window for the dialog
@@ -252,6 +285,7 @@ def create_productivity_page(app):
         font=("Helvetica", 12)
         )
         ok_button.pack(side="left", padx=10)  # Add spacing between buttons
+
     #Cancel Button
         def cancel_action():
             dialog.destroy()
@@ -269,7 +303,8 @@ def create_productivity_page(app):
         corner_radius=10,
         font=("Helvetica", 12)
         )
-        cancel_button.pack(side="right", padx=10)    
+        cancel_button.pack(side="right", padx=10) 
+
     # Start Timer Function
     def start_timer():
         global timer_running, timer_end_time, remaining_time
@@ -278,27 +313,32 @@ def create_productivity_page(app):
                 # Prompt user for timer input in minutes
                 def on_ok(minutes):
                     global timer_end_time, timer_running, remaining_time
-                    timer_duration = minutes * 60 
+                    timer_duration = minutes * 60
                     timer_end_time = time.time() + timer_duration
                     remaining_time = timer_duration
                     timer_running = True
                     start_timer_button.configure(text="Pause Timer", fg_color="#c4524e")
                     update_timer()
+                    animate_images(0, 100)  # Start the animation for one cycle
 
                 def on_cancel():
-                    pass # Return to the page without doing something
+                    pass  # Return to the page without doing something
+
                 create_custom_dialog(app, on_ok, on_cancel)
-            
+
             else:
                 timer_end_time = time.time() + remaining_time
                 timer_running = True
                 start_timer_button.configure(text="Pause Timer", fg_color="#c4524e")
                 update_timer()
+                animate_images(0, 100)  # Start the animation for one cycle
+
         else:
-            #Pause timer
+            # Pause timer
             timer_running = False
             remaining_time = max(0, int(timer_end_time - time.time()))
             start_timer_button.configure(text="Start Timer", fg_color="#cf5b58")
+
     # Update Timer Function
     def update_timer():
         global timer_running, timer_end_time, remaining_time
