@@ -578,20 +578,13 @@ def create_tasks_page(app):
     # Section 7: Segmented Buttons AND Calendar
     # ==============================================
 
-    # Code here that shows different frames of tasks groupings
-    def calendar(option):
-        print(f"Selected option: {option}")
-
     segmented_frame = ctk.CTkFrame(
         master=tasks_top, 
         fg_color="white",
         bg_color="transparent"
     )
     segmented_frame.pack(fill="x", pady=(0, 0), padx=15, side="top")
-
-    custom_font = ("Arial", 13,)  # Replace "Arial" with your desired font family
-
-
+    
     # ==============================================
     # Section 8: Tasks Display: Day, Week, Month
     # ==============================================
@@ -833,7 +826,7 @@ def create_tasks_page(app):
         height=40,
         border_width=0,
         fg_color="#f7f7f7",  # Default unselected background color
-        font=custom_font,  # Use the defined font here
+        font=("Arial", 13,),  # Use the defined font here
         text_color="#f7f7f7",  # Default unselected text color
         selected_hover_color="#cf5b58",  # Hover color when selected
         selected_color="#DC7373",  # Color when selected
@@ -893,13 +886,12 @@ def create_tasks_page(app):
         color_done = None
         task_function = None
         
-        
         # Task Status Logic
-        if task.status == TaskStatus.DONE:  
-            color_done = "grey"
+        if task.status == TaskStatus.DONE:      
+            color_done = "gray70"
             task_function = lambda: None
         else:
-            color_done = "floral white"
+            color_done = "gray96"
             task_function = lambda: somefunction(task)
             # This is where the function to send the task to the productivity mode will be inserted
 
@@ -1416,7 +1408,7 @@ def create_tasks_page(app):
             today = datetime.now().date()
 
             # Calculate the start of the target week based on the offset
-            target_date = datetime(year, month, 1) + timedelta(weeks=date_offset)
+            target_date = datetime(year, month, 7) + timedelta(weeks=date_offset)
             start_of_week = target_date - timedelta(days=target_date.weekday())
             self.current_week = start_of_week
 
@@ -1505,7 +1497,7 @@ def create_tasks_page(app):
         
         # Convert current year/month to a continuous month index
         current_month_index = (current_year * 12) + (current_month - 1)
-        print(current_month_index)
+        # print(current_month_index)
         
         # Add the offset (in months) to the current month index
         target_month_index = current_month_index + date_offset
@@ -1518,8 +1510,6 @@ def create_tasks_page(app):
         # Now just call formatmonth with the correct year and month
         frame = tkcalendar.formatmonth(frame_current_tasks, target_year, target_month)
         frame.pack(pady=10, fill="both", expand=True)
-
-
 
     def update_week_calendar(date_offset = 0):
         global frame
