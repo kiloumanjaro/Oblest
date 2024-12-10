@@ -30,54 +30,38 @@ class Task:
     difficulty_rating: int = 1 # Default difficulty rating, easiest
     course_color: str = "#FFFFFF" # Provide default color here
     
-    def calculate_priority(self, current_date: date = None) -> float:
-            """
-            Calculates the priority of a task based on difficulty, deadline, and status.
-
-            Args:
-                current_date: The date to use as the reference for calculations. 
-                            Defaults to the current date.
-
-            Returns:
-                The calculated priority as a float.
-            """
-
-            # if current_date is None:
+    def calculate_priority(self, current_date: datetime = None) -> float:
+        if current_date is None:
             current_date = datetime.now().date()
-            
-            # Adjust priority if task is already completed
-            if self.status == TaskStatus.DONE:
-                priority = 0.0
-                self.priority = priority
-                print("Task is already completed")
-                return priority
+        # Ensure current_date is a date object
+        if isinstance(current_date, datetime):
+            current_date = current_date.date()
 
-            priority = self.difficulty_rating * 2  # Base priority based on difficulty
+        if self.status == TaskStatus.DONE:
+            self.priority = 0.0
+            return 0.0
 
-            if self.deadline:
-                days_until_deadline = (self.deadline.date() - current_date).days  # No need to call .date() on deadline
+        priority = self.difficulty_rating * 2
 
-                if days_until_deadline < 0:  # Use < 0 for past deadlines
-                    priority += 20  # Increase priority significantly for overdue tasks
-                    if self.status != TaskStatus.DONE:
-                        self.status = TaskStatus.LATE
-                elif days_until_deadline == 0:
-                    priority += 15
-                    # if self.status != TaskStatus.DONE:
-                    #     self.status = TaskStatus.LATE
-                elif days_until_deadline <= 3:  # Urgent
-                    priority += 10
-                    # if self.status != TaskStatus.DONE:
-                    #     self.status = TaskStatus.LATE  # Or a similar status
-                else:
-                    # Non-linear urgency factor (decreases as deadline gets further)
-                    deadline_factor = 10 / (1 + math.exp(0.5 * (days_until_deadline - 3)))
-                    priority += deadline_factor
-            
+        if self.deadline:
+            # Convert deadline to date
+            deadline_date = self.deadline.date()
+            days_until_deadline = (deadline_date - current_date).days
 
+            if days_until_deadline < 0:
+                priority += 20
+                if self.status != TaskStatus.DONE:
+                    self.status = TaskStatus.LATE
+            elif days_until_deadline == 0:
+                priority += 15
+            elif days_until_deadline <= 3:
+                priority += 10
+            else:
+                deadline_factor = 10 / (1 + math.exp(0.5 * (days_until_deadline - 3)))
+                priority += deadline_factor
 
-            self.priority = priority
-            return priority
+        self.priority = priority
+        return priority
 
     # Both functions facilitate serialization for YAML
     # Do Not Touch Unless You Know What You're Doing
@@ -237,7 +221,7 @@ class CourseManager:
     ###########################
 
     # Should only be one single insertion, as multiple task insertion is not a thing
-    def update_priorities(self, current_date: date) -> None:
+    def update_priorities(self, current_date: datetime) -> None:
         """Update priorities of all tasks"""
         current = self.skip_list.header.forward[0]
         while current:
@@ -245,18 +229,21 @@ class CourseManager:
             current = current.forward[0]
             
     # Some function here to update a task
-    def update_task(self, updated_task: Task) -> None:  # Pass the whole Task object
-        """Updates an existing task in the skip list."""
+    def update_task(self, updated_task: Task) -> None:
         old_task = self.skip_list.search(updated_task.id)
         if old_task:
+            # Remove old version of the task
             self.skip_list.remove(updated_task.id)
-            # Check if priority-relevant fields have changed. If they do, recalculate priority
-            if old_task.deadline != updated_task.deadline or old_task.difficulty_rating != updated_task.difficulty_rating: 
-                updated_task.calculate_priority()
+            
+            # Always recalculate priority. This covers changes in status, deadline, or difficulty.
+            updated_task.calculate_priority()
+            
+            # Reinsert the updated task and save
             self.skip_list.insert(updated_task)
             self.save()
         else:
             raise ValueError(f"Task with ID {updated_task.id} not found.")
+
     
     def insert_task(self, task: Task) -> None:
         self.skip_list.insert(task)
@@ -271,6 +258,8 @@ class CourseManager:
         except ValueError:
             raise ValueError(f"Task with ID {task_id} not found.")
     
+    
+    # These can be used in the productivity page
     # Some function here to mark a task as complete
     def mark_task_complete(self, task_id: int) -> None:
         """Marks a task as complete."""

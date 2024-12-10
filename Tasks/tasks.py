@@ -7,13 +7,17 @@ from datetime import datetime, timedelta
 from Tasks.TaskManager import *
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from ttkbootstrap.scrolled import ScrolledFrame
 import customtkinter as ctk
 from tkinter import *
 import tkinter as tk
 from tkinter import PhotoImage
 from tkinter import simpledialog
 from ttkbootstrap.scrolled import ScrolledText
+import yaml
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from datetime import datetime
+from matplotlib.dates import DateFormatter, DayLocator
 
 from datetime import datetime
 from loadingOverlay import *
@@ -42,6 +46,13 @@ def relative_to_assets(path: str) -> Path:
 # app.geometry("480x820")  # Width x Height in pixels
 # app.title("Progress Tracker")
 
+
+# ==============================================
+# Section 1: Global Initialization
+# ==============================================
+
+current_year = datetime.now().year
+current_month = datetime.now().month
 
 def create_tasks_page(app):
 
@@ -72,7 +83,7 @@ def create_tasks_page(app):
     left_icon_active = PhotoImage(file=str(relative_to_assets("left_icon_active.png")))
 
 
-   # ==============================================
+    # ==============================================
     # Section 2.1: Archives Code
     # ==============================================
 
@@ -258,6 +269,349 @@ def create_tasks_page(app):
     frame_archives.pack_forget() 
 
     # ==============================================
+    # Statistics Code
+    # ==============================================
+
+    def create_stats_page(app):
+        left_button_state = BooleanVar(value=False)
+        right_button_state = BooleanVar(value=False)
+
+        try:
+            right_icon = ttk.PhotoImage(file=str(relative_to_assets("right_icon.png")))
+            left_icon = ttk.PhotoImage(file=str(relative_to_assets("left_icon.png")))
+            right_icon_active = ttk.PhotoImage(file=str(relative_to_assets("right_icon_active.png")))
+            left_icon_active = ttk.PhotoImage(file=str(relative_to_assets("left_icon_active.png")))
+        except Exception as e:
+            print(f"Error loading icons: {e}")
+            return
+        
+        frame_statistics = ttk.Frame(app)
+        frame_statistics.pack(fill="both", expand=True)
+
+        frame_controls = ttk.Frame(frame_statistics, bootstyle="primary", padding=0)
+        frame_controls.pack(fill="x", padx=10, pady=(10, 5), side="top")
+
+        frame_tasks = ttk.Frame(frame_statistics, bootstyle="primary")
+        frame_tasks.pack(fill="both", pady=0, expand=True, side="top")
+
+        tasks_top = ttk.Frame(frame_tasks, bootstyle="primary", padding=0)
+        tasks_top.pack(fill="both", padx=0, pady=0, side="top")
+
+        tasks_middle = ttk.Frame(frame_tasks, bootstyle="primary", padding=0)
+        tasks_middle.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
+
+        frame_button = ttk.Frame(frame_statistics, bootstyle="primary", padding=0)
+        frame_button.pack(fill="x", padx=10, pady=(0, 5), side="bottom")
+
+        def toggle_right_button():
+            if right_button_state.get():
+                right_button_state.set(False)
+                button_right.configure(image=right_icon)
+            else:
+                right_button_state.set(True)
+                button_right.configure(image=right_icon_active)
+
+
+        def toggle_left_button():
+            frame_statistics.pack_forget()  # Hide archives page
+            frame_taskpage.pack(fill="both", expand=True)  # Show tasks page
+            if left_button_state.get():
+                left_button_state.set(False)
+                button_left.configure(image=left_icon)
+            else:
+                left_button_state.set(True)
+                button_left.configure(image=left_icon_active)
+
+        button_left = ttk.Button(
+            frame_controls,
+            text="",
+            image=left_icon,
+            command=toggle_left_button,
+            bootstyle="secondary, link"
+        )
+        button_left.pack(side="left", padx=0, anchor="w")
+
+        button_right = ttk.Button(
+            frame_controls,
+            text="",
+            image=right_icon,
+            command=toggle_right_button,
+            bootstyle="primary, link",
+            width=4
+        )
+        button_right.pack(side="right", padx=0, anchor="e")
+
+        button_1 = ctk.CTkButton(
+            master=frame_button,
+            text="Share",
+            text_color="white",
+            command=lambda: print("Set Goals button clicked"),
+            fg_color="#DC7373",
+            hover_color="#c4524e",
+            width=360,
+            height=56,
+            corner_radius=19,
+        )
+        button_1.pack(side="bottom", anchor="s", pady=10)
+
+        # ==============================================
+        # Section 6: Task Count Display
+        # ==============================================
+
+        # Create a frame to hold the task count text
+        frame_task_count = ctk.CTkFrame(
+            master=tasks_top,
+            bg_color="transparent",
+            fg_color="white",
+        )
+        frame_task_count.pack(side='top', anchor='w', pady=(0, 0), padx=(20, 0))
+
+        # Create text for task count
+        Task_Text = ctk.CTkLabel(
+            master=frame_task_count,
+            text="You completed",  # Title of task count
+            font=(Font, 15),  # Font style and size
+            fg_color="white",  # Background color
+            text_color="#343a40" 
+        )
+        Task_Text.pack(side='top', anchor='w', pady=(10, 0), padx=(10, 0))
+
+        # Create frame to hold task count number and text
+        Tasks_Completed_Frame = ctk.CTkFrame(
+            master=frame_task_count,
+            bg_color="transparent",
+            fg_color="white"
+        )
+        Tasks_Completed_Frame.pack(side='top', anchor='w', pady=(0, 0), padx=(10, 0))
+
+        # Create task count number
+        Tasks_Completed = ctk.CTkLabel(
+            master=Tasks_Completed_Frame,
+
+            #text=all_tasks.get_num_completed_tasks(),  # Replace with actual number
+            text="273",
+            bg_color="transparent",  # Background color
+            fg_color="#ffffff",  # Foreground color
+            font=(Font, 85),  # Font style and size
+            anchor='w',  # Anchor position
+            text_color="#343a40"  # Text color
+        )
+        Tasks_Completed.pack(side='left', anchor='sw')
+
+        # Create text for "tasks"
+        Tasks_Completed_Text = ctk.CTkLabel(
+            master=Tasks_Completed_Frame,
+            text="tasks",  # Text to display
+            bg_color="transparent",  # Background color
+            fg_color="#ffffff",  # Foreground color
+            font=(Font, 20),
+            anchor='w',  # Anchor position
+            text_color="#343a40"  # Text color
+        )
+        Tasks_Completed_Text.pack(side='left', anchor='sw', pady=(0,15), padx=(5,0))
+
+
+        # Unified container for labels and data
+        stats_container = ctk.CTkFrame(
+            master=tasks_top,
+            fg_color="white",
+            corner_radius=0
+        )
+        stats_container.pack(fill="x", padx=20, pady=(10,0), side="top")
+
+        # Configure a 3-column grid in the container to align labels and data
+        stats_container.grid_columnconfigure(0, weight=1)
+        stats_container.grid_columnconfigure(1, weight=1)
+        stats_container.grid_columnconfigure(2, weight=1)
+
+        # ==============================================
+        # Row 1: Labels (Time, Average, Streak)
+        # ==============================================
+        tasks_labels = ctk.CTkFrame(
+            master=stats_container,
+            fg_color="#f7f7f7",
+            corner_radius=30
+        )
+        tasks_labels.grid(row=0, column=0, columnspan=3, sticky="ew")
+
+        # Configure tasks_labels for a 3-column layout
+        tasks_labels.grid_columnconfigure(0, weight=1)
+        tasks_labels.grid_columnconfigure(1, weight=1)
+        tasks_labels.grid_columnconfigure(2, weight=1)
+
+        button_time = ctk.CTkButton(
+            master=tasks_labels,
+            text="Time",
+            text_color="#525252",
+            bg_color="transparent",
+            fg_color="#f7f7f7",
+            hover=False,
+            width=90,
+            height=35,
+            corner_radius=30,
+            font=("Helvetica", 11)
+        )
+        button_time.grid(row=0, column=0, sticky="ew", padx=(18,0), pady=0)
+
+        button_average = ctk.CTkButton(
+            master=tasks_labels,
+            text="Average",
+            text_color="#525252",
+            hover=False,
+            fg_color="#f7f7f7",
+            width=105,
+            height=35,
+            corner_radius=10,
+            font=("Helvetica", 11)
+        )
+        button_average.grid(row=0, column=1, sticky="ew", padx=(12,8), pady=0)
+
+        button_streak = ctk.CTkButton(
+            master=tasks_labels,
+            text="Streak",
+            text_color="#525252",
+            hover=False,
+            fg_color="#f7f7f7",
+            width=90,
+            height=35,
+            corner_radius=10,
+            font=("Helvetica", 11)
+        )
+        button_streak.grid(row=0, column=2, sticky="ew", padx=(0,18), pady=0)
+
+
+        # ==============================================
+        # Row 2: Data (numeric values)
+        # ==============================================
+        font_settings_value = ("Helvetica", 15)  # Font for the numeric values
+        font_settings_unit = ("Helvetica", 13)   # Font for the units
+
+        data_entry = ctk.CTkFrame(
+            master=stats_container,
+            fg_color="white",
+            corner_radius=0
+        )
+        data_entry.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(3,0))
+
+        data_entry.grid_columnconfigure(0, weight=1)
+        data_entry.grid_columnconfigure(1, weight=1)
+        data_entry.grid_columnconfigure(2, weight=1)
+
+        # Time Frame
+        time_frame = ctk.CTkFrame(data_entry, fg_color="white", corner_radius=0)
+        time_frame.grid_rowconfigure(0, weight=1)
+        time_frame.grid_columnconfigure((0, 1), weight=1)
+        time_label_value = ctk.CTkLabel(time_frame, text="400", text_color="black", font=font_settings_value)
+        time_label_unit = ctk.CTkLabel(time_frame, text="mins", text_color="gray", font=font_settings_unit)
+        time_label_value.grid(row=0, column=0, padx=(0, 5), sticky="e")
+        time_label_unit.grid(row=0, column=1, sticky="w")
+        time_frame.grid(row=0, column=0, padx=(15, 5), pady=0, sticky="nsew")
+
+        # Average Frame
+        average_frame = ctk.CTkFrame(data_entry, fg_color="white", corner_radius=0)
+        average_frame.grid_rowconfigure(0, weight=1)
+        average_frame.grid_columnconfigure((0, 1), weight=1)
+        average_label_value = ctk.CTkLabel(average_frame, text="12", text_color="black", font=font_settings_value)
+        average_label_unit = ctk.CTkLabel(average_frame, text="mins/task", text_color="gray", font=font_settings_unit)
+        average_label_value.grid(row=0, column=0, padx=(0, 5), sticky="e")
+        average_label_unit.grid(row=0, column=1, sticky="w")
+        average_frame.grid(row=0, column=1, padx=5, pady=0, sticky="nsew")
+
+        # Streak Frame
+        streak_frame = ctk.CTkFrame(data_entry, fg_color="white", corner_radius=0)
+        streak_frame.grid_rowconfigure(0, weight=1)
+        streak_frame.grid_columnconfigure((0, 1), weight=1)
+        streak_label_value = ctk.CTkLabel(streak_frame, text="50", text_color="black", font=font_settings_value)
+        streak_label_unit = ctk.CTkLabel(streak_frame, text="days", text_color="gray", font=font_settings_unit)
+        streak_label_value.grid(row=0, column=0, padx=(0, 5), sticky="e")
+        streak_label_unit.grid(row=0, column=1, sticky="w")
+        streak_frame.grid(row=0, column=2, padx=(5, 15), pady=0, sticky="nsew")
+
+
+
+        # ==============================================
+        # Section 3: Graph
+        # ==============================================
+
+        # Sample YAML data structure
+        yaml_data = """
+        - date: "2024-12-01"
+          tasks_completed: 5
+        - date: "2024-12-02"
+          tasks_completed: 8
+        - date: "2024-12-03"
+          tasks_completed: 3
+        - date: "2024-12-04"
+          tasks_completed: 7
+        """
+
+        font_settings = {"family": "Arial", "size": 8}
+
+        data = yaml.safe_load(yaml_data)
+
+        # Extract dates and task counts
+        dates = [datetime.strptime(entry["date"], "%Y-%m-%d") for entry in data]
+        tasks_completed = [entry["tasks_completed"] for entry in data]
+
+        # Create the matplotlib figure
+        fig, ax = plt.subplots(figsize=(3, 3))
+
+        # Plot data
+        ax.plot(dates, tasks_completed, marker="o", color="#DC7373", linestyle="-", linewidth=1)
+
+
+        # Customize tick labels with a smaller font
+        ax.tick_params(axis="x", labelsize=8, labelrotation=0)
+        ax.tick_params(axis="y", labelsize=8)
+
+        # Remove the tick marks on the x-axis
+        ax.tick_params(axis='x', pad=6, length=0)
+        ax.tick_params(axis='y', pad=6, length=0)
+
+        ax.xaxis.set_major_locator(DayLocator(interval=1))  # Set interval for label spacing
+            
+        # Format the x-axis to display dates
+        ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%m/%d"))
+        plt.xticks(rotation=0)  # Ensure horizontal labels
+
+        # Adjust the bottom margin to create more space between the labels and the graph
+        plt.subplots_adjust(bottom=0.15, top=0.85)  # Adjust the bottom margin (increase this value to add more space)
+
+        # Embed the matplotlib figure in tkinter
+        canvas = FigureCanvasTkAgg(fig, master=tasks_middle)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(fill="x", expand=True, pady=("15", "0"), side="top")
+
+        ax.spines['top'].set_color('#525252')   # Top border color
+        ax.spines['right'].set_color('#525252') # Right border color
+        ax.spines['bottom'].set_color('#525252')# Bottom border color
+        ax.spines['left'].set_color('#525252')  # Left border color
+
+
+        # ==============================================
+        # Graph Title
+        # ==============================================
+
+        # Create a label for the graph title
+        graph_title = ctk.CTkLabel(
+            master=tasks_middle,
+            text="Your Progress",  # Title text
+            font=("Helvetica", 13),  # Font style and size
+            fg_color="transparent",  # Background color
+            text_color="#343a40",  # Text color
+        )
+        
+        # Position the label using place method
+        graph_title.place(relx=0.5, rely=0.07, anchor="n") 
+
+
+        return frame_statistics
+    
+    frame_statistics = create_stats_page(app)
+    frame_statistics.pack_forget() 
+
+
+    # ==============================================
     # Section 3: Frame Creation
     # ==============================================
 
@@ -279,7 +633,7 @@ def create_tasks_page(app):
     tasks_top.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
 
     tasks_middle = ttk.Frame(frame_tasks, bootstyle="primary", padding=0)
-    tasks_middle.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
+    tasks_middle.pack(fill="x", expand=False, padx=0, pady=0, side="top", anchor="n")
 
     tasks_bottom = ttk.Frame(frame_tasks, bootstyle="dark", padding=0)
     tasks_bottom.pack(fill="both", expand="yes", padx=20, pady=0, side="top")
@@ -292,6 +646,8 @@ def create_tasks_page(app):
     # ==============================================
 
     def toggle_left_button():
+        frame_taskpage.pack_forget()
+        frame_statistics.pack(fill="both", expand=True)
         if left_button_state.get():
             left_button_state.set(False)
             button_left.configure(image=left_icon)  # Default style
@@ -339,6 +695,7 @@ def create_tasks_page(app):
     def refresh_task_list(course_option, given_deadline):
         print("Refreshing task list...")
         toggle_switcher("Day", default=True)
+        tkcalendar.update_tasks()
         all_tasks.courses[course_option].update_priorities(given_deadline)
 
     def show_task_form():
@@ -571,37 +928,34 @@ def create_tasks_page(app):
     # Section 7: Segmented Buttons AND Calendar
     # ==============================================
 
-    # Code here that shows different frames of tasks groupings
-    def calendar(option):
-        print(f"Selected option: {option}")
-
     segmented_frame = ctk.CTkFrame(
         master=tasks_top, 
         fg_color="white",
         bg_color="transparent"
     )
     segmented_frame.pack(fill="x", pady=(0, 0), padx=15, side="top")
-
-    custom_font = ("Arial", 13,)  # Replace "Arial" with your desired font family
-
-
+    
     # ==============================================
     # Section 8: Tasks Display: Day, Week, Month
     # ==============================================
 
+    # Create the higher frame
+    higher_frame = ctk.CTkFrame(tasks_bottom, bg_color="white", fg_color="white", height = 420)
+    higher_frame.pack(fill="x", expand=False)
+
     frame_current_tasks = ctk.CTkScrollableFrame(
-        master=tasks_bottom,
+        master=higher_frame,
         bg_color="transparent",
         corner_radius=0,
         fg_color="white",
-        height = 390,
+        height = 420,
         border_color="#FFFFFF",
         scrollbar_button_color="white",       # Default color of scrollbar button     
         scrollbar_button_hover_color="#555555"
     )
     # Initially hide the frame (it will only appear when "Day" is selected)
     frame_current_tasks.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=YES)
-
+    
     original_scrollbar_grid_info = frame_current_tasks._scrollbar.grid_info()
 
     def toggle_scrollbar(enable):
@@ -616,23 +970,6 @@ def create_tasks_page(app):
     # Helper Functions: Gets tasks for day, week, month
     # ----------------------------------------------
    
-    def get_tasks_in_range(tasks: list[Task], start: datetime, end: datetime, exact_deadline: bool = False) -> list[Task]:
-        relevant_tasks = []
-        for task in tasks:
-            if exact_deadline:
-                # Day view: strictly match the deadline date
-                if task.deadline and task.deadline.date() == start:
-                    relevant_tasks.append(task)
-            else:
-                # Week/Month view: check if the task overlaps the given date range
-                task_start = task.initial_date.date()
-                task_end = task.deadline.date() if task.deadline else task_start
-                # Include tasks that fall within or intersect the given start-end range
-                if task_start <= end and task_end >= start:
-                    relevant_tasks.append(task)
-
-        return relevant_tasks
-
     def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
         # As defined before, returns tasks that have a deadline exactly on selected_date
         return [task for task in tasks if task.deadline and task.deadline.date() == selected_date]
@@ -676,12 +1013,22 @@ def create_tasks_page(app):
         )
 
     switcher = create_switcher()
-    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=NO)
+    switcher.pack(pady=(10, 0), padx=(0, 0), fill="both", side="top", expand=False)
 
     def toggle_switcher(option, default=True, date_offset=0):
         """
         Handles switching between Day, Week, and Month views, including UI updates and button setup.
         """
+        
+        frame_current_tasks.pack_forget()
+        loading_overlay = ctk.CTkFrame(higher_frame, bg_color="white", fg_color="white")
+        loading_overlay.pack(fill="both", expand=True)
+        loading_overlay.lift()
+        loading_text = ctk.CTkLabel(loading_overlay, bg_color="white", fg_color="white", text_color="black", text="Loading...", height=400, font=("Helvetica", 18), anchor="center" )
+        loading_text.pack(pady=(10, 10))
+        
+        frame_current_tasks.pack(pady=(0, 0), padx=(0, 0), fill="both", expand=True)
+        loading_overlay.after(100, lambda: loading_overlay.destroy())
 
         # Clear existing widgets in frame_current_tasks
         for widget in frame_current_tasks.winfo_children():
@@ -693,7 +1040,7 @@ def create_tasks_page(app):
         
         # Dictionary to map options to functions
         options = {
-            "Day": show_day_view, 
+            "Day": show_day_view_option, 
             "Week": show_week_view_option,    
             "Month": show_month_view_option,  
         }
@@ -729,18 +1076,18 @@ def create_tasks_page(app):
                     target_date = datetime.now().date() + timedelta(days=date_offset)
                     date_display = target_date.strftime("%Y-%m-%d")
                 elif option == "Week":
-                    func()  # Week view function doesn't use date_offset directly
+                    func(date_offset=date_offset)  # Week view function doesn't use date_offset directly
                     # Calculate week number based on offset (this is more complex)
                     target_week = datetime.now().date() + timedelta(weeks=date_offset)
                     week_number = target_week.isocalendar()[1]
                     date_display = f"Week {week_number}"
                 elif option == "Month":
-                    func()  # Month view function doesn't use date_offset directly
+                    func(date_offset=date_offset)  # Month view function doesn't use date_offset directly
                     # Calculate month based on offset (also more complex)
                     target_month = datetime.now().date() + timedelta(days=date_offset * 30)  # Approximation!
                     date_display = target_month.strftime("%B")
 
-            
+
 
         # Configure the grid to expand and center the widgets (for switcher)
         switcher.grid_columnconfigure(0, weight=0)
@@ -752,11 +1099,8 @@ def create_tasks_page(app):
         def previous_of():
             toggle_switcher(option, default=False, date_offset= current_offset - 1)
             
-
         def next_of():
             toggle_switcher(option, default=False, date_offset= current_offset + 1)
-            
-        
 
         # Create Previous button
         previous = ctk.CTkButton(
@@ -794,8 +1138,9 @@ def create_tasks_page(app):
             command=next_of  # Link to your next_of function
         )
         next.grid(row=0, column=3, padx=20, pady=5)
+        
 
-    def show_day_view(given_date:datetime = datetime.now().date(), date_offset: int = 0):
+    def show_day_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Populate tasks or show generic message
         toggle_scrollbar(True) 
         target_date = datetime.now().date() + timedelta(days=date_offset)
@@ -819,20 +1164,16 @@ def create_tasks_page(app):
         else:
             create_generic_frame(frame_current_tasks)
             
-    # def show_day_view_option():
-    #     populate_day_view()
 
     def show_week_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         toggle_scrollbar(False)
         # Show week view and toggle calendar
-        show_week_view()
-        toggle_calendar()
+        update_week_calendar(date_offset)
 
     def show_month_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Show month view and toggle calendar
         toggle_scrollbar(False)
-        show_month_view()
-        toggle_calendar()
+        update_month_calendar(date_offset)
 
     # ----------------------------------------------
     # Segment Buttons Update Logic
@@ -847,7 +1188,7 @@ def create_tasks_page(app):
         height=40,
         border_width=0,
         fg_color="#f7f7f7",  # Default unselected background color
-        font=custom_font,  # Use the defined font here
+        font=("Arial", 13,),  # Use the defined font here
         text_color="#f7f7f7",  # Default unselected text color
         selected_hover_color="#cf5b58",  # Hover color when selected
         selected_color="#DC7373",  # Color when selected
@@ -907,13 +1248,12 @@ def create_tasks_page(app):
         color_done = None
         task_function = None
         
-        
         # Task Status Logic
-        if task.status == TaskStatus.DONE:  
-            color_done = "grey"
+        if task.status == TaskStatus.DONE:      
+            color_done = "gray70"
             task_function = lambda: None
         else:
-            color_done = "floral white"
+            color_done = "gray96"
             task_function = lambda: somefunction(task)
             # This is where the function to send the task to the productivity mode will be inserted
 
@@ -1004,28 +1344,19 @@ def create_tasks_page(app):
     # ==============================================
     
     def edit_task(task: Task):
-        """
-        Opens a form to edit an existing task.
-        """
         frame_tasks.pack_forget()
         frame_button.pack_forget()
 
         frame_edit_task = ttk.Frame(frame_taskpage, bootstyle="primary")
         frame_edit_task.pack(fill="both", expand=True)
 
-        # ----------------------------------------------
-        # 9.5.1: Form Field Creation
-        # ----------------------------------------------
         # Task Title Field
         ttk.Label(frame_edit_task, text="Task Title:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         task_title_entry = ttk.Entry(frame_edit_task, width=50, bootstyle="danger")
-        task_title_entry.insert(0, task.name)  # Pre-fill with existing title
+        task_title_entry.insert(0, task.name)
         task_title_entry.pack(pady=(0,10))
 
-        date_placeholder = None
-
-        if task.deadline:
-            date_placeholder = task.deadline.date()
+        date_placeholder = task.deadline.date() if task.deadline else None
 
         # Deadline Date Field
         ttk.Label(frame_edit_task, text="Deadline Date:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
@@ -1036,15 +1367,11 @@ def create_tasks_page(app):
             startdate=date_placeholder
         )
         deadline_date_entry.pack(pady=(0,10))
-        
-        # Test
-        print(task.deadline)
-        
-        # Status Field
+
+        # Status Field (For testing/demo)
         ttk.Label(frame_edit_task, text="Status: [FOR TESTING ONLY]", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
-        status_var = tk.StringVar()
-        status_var.set(task.status.value)  # Set initial value to task's current status
-        status_options = [status.value for status in TaskStatus][:2]
+        status_var = tk.StringVar(value=task.status.value)
+        status_options = [s.value for s in TaskStatus][:2]  # "done", "not_done"
         status_dropdown = ctk.CTkComboBox(
             master=frame_edit_task,
             corner_radius=20,
@@ -1060,13 +1387,10 @@ def create_tasks_page(app):
         )
         status_dropdown.pack(pady=(0,10))
 
-        # Course Selection Field
+        # Course Field
         ttk.Label(frame_edit_task, text="Course:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
-        courses = all_tasks.get_courses()
-        if not courses:
-            courses = ["general"]
-        course_var = tk.StringVar()
-        course_var.set(task.course_tag)  # Pre-select the task's current course
+        courses = all_tasks.get_courses() or ["general"]
+        course_var = tk.StringVar(value=task.course_tag)
         course_dropdown = ctk.CTkComboBox(
             master=frame_edit_task,
             corner_radius=20,
@@ -1085,7 +1409,6 @@ def create_tasks_page(app):
         # Difficulty Rating
         def update_label(val):
             difficulty_rating_label.configure(text=f"Difficulty Rating: {round(float(val))}", font=('Helvetica', 10, 'bold'))
-
         difficulty_rating_label = ttk.Label(frame_edit_task, text=f"Difficulty Rating: {task.difficulty_rating}", font=('Helvetica', 10, 'bold'))
         difficulty_rating_label.pack(pady=(10,2))
 
@@ -1097,26 +1420,17 @@ def create_tasks_page(app):
             command=update_label,
             bootstyle="danger"
         )
-        difficulty_rating_slider.set(task.difficulty_rating)  # Set the initial value from the task
+        difficulty_rating_slider.set(task.difficulty_rating)
         difficulty_rating_slider.pack(pady=(0,10))
 
         # Content Field
         ttk.Label(frame_edit_task, text="Content:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         content_text = ScrolledText(frame_edit_task, width=50, height=10, bootstyle="danger")
-        content_text.insert("1.0", task.text_content)  # Pre-fill with existing content
+        content_text.insert("1.0", task.text_content)
         content_text.pack(pady=(0,10))
-        
-        # ----------------------------------------------
-        # 9.5.2: Form Action Functions
-        # ----------------------------------------------
 
         def update_task():
-            """
-            Updates the task with the new values from the form.
-            """
-            nonlocal task  # Access the task variable from the outer scope
-
-            # Get updated values from form fields
+            nonlocal task
             new_title = task_title_entry.get()
             new_deadline_str = deadline_date_entry.entry.get()
             new_course = course_var.get()
@@ -1124,46 +1438,32 @@ def create_tasks_page(app):
             new_status_str = status_var.get()
             new_difficulty_rating = int(difficulty_rating_slider.get())
 
-            # Validate deadline date
+            # Validate deadline
             try:
-                if new_deadline_str:
-                    new_deadline = datetime.strptime(new_deadline_str, "%Y-%m-%d")
-                else:
-                    new_deadline = None
+                new_deadline = datetime.strptime(new_deadline_str, "%Y-%m-%d") if new_deadline_str else None
             except ValueError:
-                simpledialog.messagebox.showerror(
-                    "Invalid Date",
-                    "Please enter a valid date in the format YYYY-MM-DD."
-                )
+                simpledialog.messagebox.showerror("Invalid Date", "Please enter a valid date in the format YYYY-MM-DD.")
                 return
 
-            # Convert status string back to TaskStatus enum
+            # Convert status string to enum
             try:
                 new_status = TaskStatus(new_status_str)
             except ValueError:
                 simpledialog.messagebox.showerror("Invalid Status", "Please select a valid status.")
                 return
 
-            # --- COURSE EXISTENCE CHECK WITH CONFIRMATION ---
+            # If course doesn't exist, offer to create it
             if new_course not in all_tasks.get_courses():
-                if not simpledialog.messagebox.askyesno(
-                    "Course Not Found",
-                    f"The course '{new_course}' does not exist. Do you want to create it?"
-                ):
-                    # User chose not to create the course, so return to the form
+                if not simpledialog.messagebox.askyesno("Course Not Found", f"The course '{new_course}' does not exist. Do you want to create it?"):
                     return
-
-                # User chose to create the course
                 try:
                     all_tasks.add_course(new_course)
-                    course_dropdown.configure(values=all_tasks.get_courses())  # Update dropdown values
-                    course_var.set(new_course)  # Set the new course as selected
+                    course_dropdown.configure(values=all_tasks.get_courses())
+                    course_var.set(new_course)
                 except ValueError as e:
                     simpledialog.messagebox.showerror("Error Creating Course", str(e))
                     return
-            # --- END OF COURSE EXISTENCE CHECK ---
 
-            # Store old course tag to help with moving task between courses
             old_course = task.course_tag
 
             # Update task properties
@@ -1171,49 +1471,35 @@ def create_tasks_page(app):
             task.deadline = new_deadline
             task.course_tag = new_course
             task.text_content = new_content
-            
-            # Determine if task status needs to be updated and handle it
-            # This is only executed if the new status is different from the old status
-            if new_status != task.status:
-                try:
-                    if new_status == TaskStatus.DONE:
-                        all_tasks.courses[new_course].mark_task_complete(task.id)  # Mark as complete
-                    elif new_status == TaskStatus.NOT_DONE:
-                        all_tasks.courses[new_course].mark_task_incomplete(task.id)  # Mark as incomplete
-                except ValueError as e:
-                    simpledialog.messagebox.showerror("Error Updating Task Status", str(e))
-                    return
-            else:
-                # If the status hasn't changed, just update the other task properties
-                task.status = new_status
-
+            task.status = new_status
             task.difficulty_rating = new_difficulty_rating
 
-            # Update the task in the TaskManager (handling potential course change)
-            try:
-                if old_course != new_course:
-                    # Move the task to the new course
-                    all_tasks.move_task(task.id, old_course, new_course)
-                else:
-                    # Update the task in the current course
+            # If the course changed, move the task first
+            if old_course != new_course:
+                if not all_tasks.move_task(task.id, old_course, new_course):
+                    simpledialog.messagebox.showerror("Error Updating Task", "Failed to move task to the new course.")
+                    return
+                # After moving the task to the new course, we must update it there
+                try:
                     all_tasks.courses[new_course].update_task(task)
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Updating Task", str(e))
+                    return
+            else:
+                # Update task directly in the current course
+                try:
+                    all_tasks.courses[new_course].update_task(task)
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Updating Task", str(e))
+                    return
 
-            except ValueError as e:
-                simpledialog.messagebox.showerror("Error Updating Task", str(e))
-                return
-
-            # Refresh task list display
+            # Refresh display
             refresh_task_list(new_course, new_deadline)
-
-            # Hide the edit form and show the task list/buttons
             frame_edit_task.pack_forget()
             frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")
             frame_tasks.pack(fill="both", expand=True)
-            
-            # Updates the count of completed tasks
-            # global Tasks_Completed
-            
             Tasks_Completed.configure(text=f"{all_tasks.get_num_completed_tasks()}")
+
 
         def cancel_edit():
             """
@@ -1276,50 +1562,48 @@ def create_tasks_page(app):
     task_button.pack(side="bottom", anchor="s", pady=int(screen_height * 0.0093))
 
     # ==============================================
-    # Section 12: Hyas Code
+    # Section 11: Hyas Code
     # ==============================================
 
     frame = None
 
-    # ==============================================
-    # Section 12.1: Calendar Widget Class
-    # ==============================================
+    # ----------------------------------------------
+    # Section 11.1: Calendar Widget Class
+    # ----------------------------------------------
 
     class TkinterCalendar(Calendar):
-        # ==============================================
-        # Section 12.1.1: Initialization and Task Storage
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.1: Initialization and Task Storage
+        # ----------------------------------------------
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.tasks = {}
+            self.tasks = all_tasks.get_all_tasks_by_priority()  # Now a list of Task objects
             
-        def name_task(self, date, task_name, subject, color): 
-            if date not in self.tasks:
-                self.tasks[date] = []
-            self.tasks[date].append({"name": task_name, "subject": subject, "color": color})
+        def update_tasks(self):
+            self.tasks = all_tasks.get_all_tasks_by_priority()
 
-        # ==============================================
-        # Section 12.1.2: Helper Functions
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.2: Helper Functions
+        # ----------------------------------------------
 
-        def darken_color(hex_color, factor=0.45):
+        def darken_color(self, hex_color, factor=0.45):
             hex_color = hex_color.lstrip("#")
             rgb = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
             darkened_rgb = tuple(max(0, int(c * factor)) for c in rgb)
             return "#{:02x}{:02x}{:02x}".format(*darkened_rgb)
 
-        # ==============================================
-        # Section 12.1.3: Monthly View Formatting
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.3: Monthly View Formatting
+        # ----------------------------------------------
 
-        def formatmonth(self, master, year, month):
+        def formatmonth(self, master, year, month, date_offset=0):
             # Check if the frame exists and destroy it if necessary
             if hasattr(self, 'frame') and self.frame.winfo_exists():
                 self.frame.destroy()
 
             dates = self.monthdatescalendar(year, month)
-            self.frame = ttk.Frame(master, bootstyle=PRIMARY)
+            self.frame = ttk.Frame(master, bootstyle="primary")
             self.labels = []
 
             today = datetime.now().date()
@@ -1332,7 +1616,7 @@ def create_tasks_page(app):
                     font=("Helvetica", 10, "bold"),
                     width=4,
                     anchor="center",
-                    bootstyle=SECONDARY
+                    bootstyle="secondary"
                 ).grid(row=0, column=c, padx=5, pady=(5, 5))
 
             # Configure columns to expand
@@ -1342,7 +1626,7 @@ def create_tasks_page(app):
             for r, week in enumerate(dates, start=1):
                 labels_row = []
                 for c, date in enumerate(week):
-                    cell_frame = ttk.Frame(self.frame, width=14, height=14  , bootstyle=PRIMARY)
+                    cell_frame = ttk.Frame(self.frame, width=14, height=14, bootstyle="primary")
                     cell_frame.grid(row=r, column=c, padx=1, pady=10, sticky="nsew")
 
                     label = ttk.Label(
@@ -1351,9 +1635,9 @@ def create_tasks_page(app):
                         font=("Helvetica", 9),
                         width=4,
                         anchor="center",
-                        bootstyle=SECONDARY
+                        bootstyle="secondary"
                     )
-                    label.pack(expand=True, fill="both")
+                    label.pack(expand=True, fill="both", side="top")
 
                     # Configuration for days not in the current month
                     if date.month != month:
@@ -1371,13 +1655,18 @@ def create_tasks_page(app):
                             background="#efefef"
                         )
 
-                    if date in self.tasks:
-                        task_frame = ttk.Frame(cell_frame, bootstyle=PRIMARY)
+                    # Filter tasks for the current date
+                    tasks_for_date = [task for task in self.tasks if task.deadline and task.deadline.date() == date]
+
+                    # print(tasks_for_date)   
+
+                    if tasks_for_date:
+                        task_frame = ttk.Frame(cell_frame, bootstyle="primary")
                         task_frame.pack(fill="both", expand=True)
                         max_tasks_per_row = 2
 
-                        num_tasks = len(self.tasks[date])
-                        rows_needed = (num_tasks + max_tasks_per_row - 1) // max_tasks_per_row 
+                        num_tasks = len(tasks_for_date)
+                        rows_needed = (num_tasks + max_tasks_per_row - 1) // max_tasks_per_row
 
                         for row in range(rows_needed):
                             task_frame.grid_rowconfigure(row, weight=1, uniform="equal")
@@ -1385,26 +1674,27 @@ def create_tasks_page(app):
                             task_frame.grid_columnconfigure(col, weight=1, uniform="equal")
 
                         if num_tasks == 1:
-                            task_button = ctk.CTkButton(
-                                master=task_frame,
-                                text="",  # Optional: Add task description
-                                fg_color=task["color"],
-                                hover_color=task["color"],
-                                corner_radius=1,
-                                width = 250,
-                                height =5
-                            )
-                            task_button.pack(fill="both", expand=True, padx=2, pady=2)
+                            for task in tasks_for_date:
+                                task_button = ctk.CTkButton(
+                                    master=task_frame,
+                                    text="",  # Display task name
+                                    fg_color=all_tasks.get_course_color(task.course_tag),
+                                    hover_color=self.darken_color(all_tasks.get_course_color(task.course_tag)),
+                                    corner_radius=1,
+                                    width=250,
+                                    height=5
+                                )
+                                task_button.pack(fill="both", expand=True, padx=2, pady=2)
                         else:
-                            for i, task in enumerate(self.tasks[date]):
+                            for i, task in enumerate(tasks_for_date):
                                 row = i // max_tasks_per_row
                                 col = i % max_tasks_per_row
 
                                 task_button = ctk.CTkButton(
                                     master=task_frame,
-                                    text="",
-                                    fg_color=task["color"],
-                                    hover_color=task["color"],
+                                    text="",  # Display task name
+                                    fg_color=all_tasks.get_course_color(task.course_tag),
+                                    hover_color=self.darken_color(all_tasks.get_course_color(task.course_tag)),
                                     width=250,
                                     height=5,
                                     corner_radius=1
@@ -1416,19 +1706,24 @@ def create_tasks_page(app):
 
             return self.frame
 
-        # ==============================================
-        # Section 12.1.4: Weekly View Formatting
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.4: Weekly View Formatting
+        # ----------------------------------------------
 
-        def formatweek(self, master, year, month):
+        def formatweek(self, master, year, month, date_offset=0):
             today = datetime.now().date()
+
+            # Correctly calculate the start of the target week
+            target_date = datetime(year, month, today.day) + timedelta(weeks=date_offset)  # Start from the first of the month
+            start_of_week = target_date - timedelta(days=(target_date.weekday()))  # Adjust to start of the week
+            self.current_week = start_of_week
 
             # Check if the container exists and destroy it if necessary
             if hasattr(self, 'container') and self.container.winfo_exists():
                 self.container.destroy()
 
             # Generate week dates for the current week
-            week_dates = [self.current_week + timedelta(days=i) for i in range(7)]
+            week_dates = [(self.current_week + timedelta(days=i)) for i in range(7)]
 
             # Main container
             self.container = ctk.CTkFrame(master, fg_color="white")
@@ -1443,7 +1738,7 @@ def create_tasks_page(app):
 
             for c, (weekday, date) in enumerate(zip(weekdays, week_dates)):
                 # Cell container for each day
-                cell_frame = ctk.CTkFrame(self.container, fg_color="white", corner_radius=5)
+                cell_frame = ctk.CTkFrame(self.container, fg_color="white", corner_radius=0)
                 cell_frame.grid(row=0, column=c, padx=0, pady=0, sticky="nsew")
 
                 # Header with date and day of the week
@@ -1465,159 +1760,100 @@ def create_tasks_page(app):
                     )
 
                 # Task container inside each day
-                task_frame = ctk.CTkFrame(cell_frame, fg_color="#f0f0f0", corner_radius=5)
+                task_frame = ctk.CTkFrame(cell_frame, fg_color="#f0f0f0", corner_radius=0)
                 task_frame.pack(fill="both", expand=True, padx=1, pady=(5, 10))
 
+                # Filter tasks for the current date
+                tasks_for_date = [task for task in self.tasks if task.deadline and task.deadline.date() == date.date()]
+
+                # print(tasks_for_date) # Uncomment to check if tasks are being found
+                # print(date.date())
+
                 # Display tasks if any
-                if date in self.tasks:
-                    for i, task in enumerate(self.tasks[date]):
+                if tasks_for_date:
+                    for i, task in enumerate(tasks_for_date):
                         # Create a frame for each task
                         task_button = ctk.CTkFrame(
                             master=task_frame,
-                            fg_color=task["color"],
-                            corner_radius=5,
+                            fg_color=all_tasks.get_course_color(task.course_tag),
+                            corner_radius=0,
                             height=50,
                         )
                         task_button.pack(fill="x", expand=False, pady=1)
 
-                        # Task subject
-                        subject_label = ctk.CTkLabel(
+                        # Task name
+                        name_label = ctk.CTkLabel(
                             master=task_button,
-                            text=task.get("subject"),
-                            font=("Helvetica", 6),
-                            text_color=TkinterCalendar.darken_color(task["color"]),
+                            text=task.name.split()[0],
+                            font=("Helvetica", 12, "bold"),
+                            text_color="black"
                         )
-                        subject_label.pack(side="bottom", padx=1, pady=(0, 0))
+                        name_label.pack(side="top", padx=1, pady=(0, 0))
+
+                        # Task course tag
+                        # subject_label = ctk.CTkLabel(
+                        #     master=task_button,
+                        #     text=task.course_tag,
+                        #     font=("Helvetica", 8),
+                        #     text_color=self.darken_color(all_tasks.get_course_color(task.course_tag)),
+                        # )
+                        # subject_label.pack(side="bottom", padx=1, pady=(0, 0))
 
             return self.container
+        
 
     # ==============================================
-    # Section 12.2: Calendar Initialization and Display
+    # Section 11.2: Calendar Initialization and Display
     # ==============================================
 
-    current_year = datetime.now().year
-    current_month = datetime.now().month
     tkcalendar = TkinterCalendar()
     frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
     frame.pack_forget()
 
     # ==============================================
-    # Section 12.3: Calendar Update Functions
+    # Section 11.3: Calendar Update Functions
     # ==============================================
 
-    def update_month_calendar():
+    def update_month_calendar(date_offset=0):
         global frame, current_month, current_year
-        current_year = datetime.now().year
-        current_month = datetime.now().month
-        frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
-        frame.pack(pady=10, fill="both", expand=True) 
+        
+        # Convert current year/month to a continuous month index
+        current_month_index = (current_year * 12) + (current_month - 1)
+        # print(current_month_index)
+        
+        # Add the offset (in months) to the current month index
+        target_month_index = current_month_index + date_offset
+        
+        # Convert back to year and month
+        target_year, target_month = divmod(target_month_index, 12)
+        target_year = target_year
+        target_month = target_month + 1  # because months are 1-based
 
-    def update_week_calendar():
+        # Now just call formatmonth with the correct year and month
+        frame = tkcalendar.formatmonth(frame_current_tasks, target_year, target_month)
+        frame.pack(pady=10, fill="both", expand=True)
+
+    def update_week_calendar(date_offset = 0):
         global frame
-        if not tkcalendar.current_week:
-            tkcalendar.current_week = datetime.now().date() - timedelta(days=datetime.now().weekday())
-        week_number = tkcalendar.current_week.isocalendar()[1]  
+        # Calculate the start of the target week based on the offset
+        target_date = datetime.now().date() + timedelta(weeks=date_offset)
+        tkcalendar.current_week = target_date - timedelta(days=target_date.weekday())
+        
+        week_number = tkcalendar.current_week.isocalendar()[1]
         year = tkcalendar.current_week.year
-        frame = tkcalendar.formatweek(frame_current_tasks, tkcalendar.current_week.year, tkcalendar.current_week.month)
-        frame.pack(pady=10, fill="both", expand=True) 
+        frame = tkcalendar.formatweek(frame_current_tasks, year, tkcalendar.current_week.month, date_offset)
+        frame.pack(pady=10, fill="both", expand=True)
 
     # ==============================================
-    # Section 12.4: Navigation Functions
+    # Section 11.4: Sample Tasks
     # ==============================================
 
-    def prev_month():
-        global current_year, current_month
-        current_month -= 1
-        if current_month == 0:
-            current_month = 12
-            current_year -= 1
-        update_month_calendar()
-
-    def next_month():
-        global current_year, current_month
-        current_month += 1
-        if current_month == 13:
-            current_month = 1
-            current_year += 1
-        update_month_calendar()
-
-    def prev_week():
-        if tkcalendar.current_week:
-            tkcalendar.current_week -= timedelta(weeks=1)
-        else:
-            tkcalendar.current_week = datetime.now().date() - timedelta(weeks=1)
-        update_week_calendar()
-
-    def next_week():
-        if tkcalendar.current_week:
-            tkcalendar.current_week += timedelta(weeks=1)
-        else:
-            tkcalendar.current_week = datetime.now().date() + timedelta(weeks=1)
-        update_week_calendar()
-
-    # ==============================================
-    # Section 12.5: View Switching
-    # ==============================================
-
-    current_view = None
-
-    def show_month_view():
-        global current_view, frame
-        current_view = "month"
-        current_year = datetime.now().year
-        current_month = datetime.now().month  # Reset to curret when we switch
-        frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
-        frame.pack(pady=20, fill="both", expand=True) 
-        update_navigation_buttons()  # Update navigation buttons so that it knows what to switch
-        update_month_calendar() 
-
-    def show_week_view():
-        global current_view, frame
-        current_view = "week"
-        tkcalendar.current_week = datetime.now().date() - timedelta(days=datetime.now().weekday())  # Refreshes the week calendar with the current week
-        frame = tkcalendar.formatweek(frame_current_tasks, current_year, current_month)
-        frame.pack(pady=20, fill="both", expand=True) 
-        update_navigation_buttons() 
-        update_week_calendar() 
-
-    # ==============================================
-    # Section 12.6: Navigation Button Update
-    # ==============================================
-
-    #so depending on what view we are in, it uses that button
-    def update_navigation_buttons():
-        if current_view == "month":
-            button_prev.configure(command=prev_month)
-            button_next.configure(command=next_month)
-        elif current_view == "week":
-            button_prev.configure(command=prev_week)
-            button_next.configure(command=next_week)
-
-    # ==============================================
-    # Section 12.7: Sample Tasks
-    # ==============================================
-
-    # Sample tasks with descriptions for week view
-    tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
-    tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700") #just to see how it looks like with more tasks
-    tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
-    tkcalendar.name_task(datetime(2024, 12, 8).date(), "Examination", "CMSC 130", "#DC7373")
-    tkcalendar.name_task(datetime(2024, 12, 5).date(), "Evaluation", "Ethics", "#90EE90")
-
-    # ==============================================
-    # Section 12.8: Calendar Toggle Function
-    # ==============================================
-
-    def toggle_calendar():
-        """Toggle the visibility of the calendar frame."""
-        global frame  # Declare frame as global
-        if frame and frame.winfo_ismapped():  # If the frame is currently displayed
-            frame.pack_forget()  # Hide the frame
-        else:
-            # Show the calendar based on the current view
-            if current_view == "month":
-                update_month_calendar()
-            elif current_view == "week":
-                update_week_calendar()
+    # # Sample tasks with descriptions for week view
+    # tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
+    # tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700") #just to see how it looks like with more tasks
+    # tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
+    # tkcalendar.name_task(datetime(2024, 12, 8).date(), "Examination", "CMSC 130", "#DC7373")
+    # tkcalendar.name_task(datetime(2024, 12, 5).date(), "Evaluation", "Ethics", "#90EE90")
 
     return frame_taskpage
+
