@@ -1019,7 +1019,9 @@ def create_tasks_page(app):
         """
         Handles switching between Day, Week, and Month views, including UI updates and button setup.
         """
+        
         frame_current_tasks.pack_forget()
+        loading_overlay = ctk.CTkFrame(higher_frame, bg_color="white", fg_color="white")
         loading_overlay.pack(fill="both", expand=True)
         loading_overlay.lift()
         loading_text = ctk.CTkLabel(loading_overlay, bg_color="white", fg_color="white", text_color="black", text="Loading...", height=400, font=("Helvetica", 18), anchor="center" )
