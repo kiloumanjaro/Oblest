@@ -43,6 +43,13 @@ def relative_to_assets(path: str) -> Path:
 # app.title("Progress Tracker")
 
 
+# ==============================================
+# Section 1: Global Initialization
+# ==============================================
+
+current_year = datetime.now().year
+current_month = datetime.now().month
+
 def create_tasks_page(app):
 
     # ==============================================
@@ -616,23 +623,6 @@ def create_tasks_page(app):
     # Helper Functions: Gets tasks for day, week, month
     # ----------------------------------------------
    
-    def get_tasks_in_range(tasks: list[Task], start: datetime, end: datetime, exact_deadline: bool = False) -> list[Task]:
-        relevant_tasks = []
-        for task in tasks:
-            if exact_deadline:
-                # Day view: strictly match the deadline date
-                if task.deadline and task.deadline.date() == start:
-                    relevant_tasks.append(task)
-            else:
-                # Week/Month view: check if the task overlaps the given date range
-                task_start = task.initial_date.date()
-                task_end = task.deadline.date() if task.deadline else task_start
-                # Include tasks that fall within or intersect the given start-end range
-                if task_start <= end and task_end >= start:
-                    relevant_tasks.append(task)
-
-        return relevant_tasks
-
     def get_tasks_for_day(tasks: list[Task], selected_date: datetime) -> list[Task]:
         # As defined before, returns tasks that have a deadline exactly on selected_date
         return [task for task in tasks if task.deadline and task.deadline.date() == selected_date]
@@ -676,7 +666,7 @@ def create_tasks_page(app):
         )
 
     switcher = create_switcher()
-    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=NO)
+    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=False)
 
     def toggle_switcher(option, default=True, date_offset=0):
         """
@@ -693,7 +683,7 @@ def create_tasks_page(app):
         
         # Dictionary to map options to functions
         options = {
-            "Day": show_day_view, 
+            "Day": show_day_view_option, 
             "Week": show_week_view_option,    
             "Month": show_month_view_option,  
         }
@@ -729,13 +719,13 @@ def create_tasks_page(app):
                     target_date = datetime.now().date() + timedelta(days=date_offset)
                     date_display = target_date.strftime("%Y-%m-%d")
                 elif option == "Week":
-                    func()  # Week view function doesn't use date_offset directly
+                    func(date_offset=date_offset)  # Week view function doesn't use date_offset directly
                     # Calculate week number based on offset (this is more complex)
                     target_week = datetime.now().date() + timedelta(weeks=date_offset)
                     week_number = target_week.isocalendar()[1]
                     date_display = f"Week {week_number}"
                 elif option == "Month":
-                    func()  # Month view function doesn't use date_offset directly
+                    func(date_offset=date_offset)  # Month view function doesn't use date_offset directly
                     # Calculate month based on offset (also more complex)
                     target_month = datetime.now().date() + timedelta(days=date_offset * 30)  # Approximation!
                     date_display = target_month.strftime("%B")
@@ -795,7 +785,7 @@ def create_tasks_page(app):
         )
         next.grid(row=0, column=3, padx=20, pady=5)
 
-    def show_day_view(given_date:datetime = datetime.now().date(), date_offset: int = 0):
+    def show_day_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Populate tasks or show generic message
         toggle_scrollbar(True) 
         target_date = datetime.now().date() + timedelta(days=date_offset)
@@ -819,20 +809,16 @@ def create_tasks_page(app):
         else:
             create_generic_frame(frame_current_tasks)
             
-    # def show_day_view_option():
-    #     populate_day_view()
 
     def show_week_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         toggle_scrollbar(False)
         # Show week view and toggle calendar
-        show_week_view()
-        toggle_calendar()
+        update_week_calendar(date_offset)
 
     def show_month_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Show month view and toggle calendar
         toggle_scrollbar(False)
-        show_month_view()
-        toggle_calendar()
+        update_month_calendar(date_offset)
 
     # ----------------------------------------------
     # Segment Buttons Update Logic
@@ -1276,19 +1262,19 @@ def create_tasks_page(app):
     task_button.pack(side="bottom", anchor="s", pady=int(screen_height * 0.0093))
 
     # ==============================================
-    # Section 12: Hyas Code
+    # Section 11: Hyas Code
     # ==============================================
 
     frame = None
 
-    # ==============================================
-    # Section 12.1: Calendar Widget Class
-    # ==============================================
+    # ----------------------------------------------
+    # Section 11.1: Calendar Widget Class
+    # ----------------------------------------------
 
     class TkinterCalendar(Calendar):
-        # ==============================================
-        # Section 12.1.1: Initialization and Task Storage
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.1: Initialization and Task Storage
+        # ----------------------------------------------
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -1299,27 +1285,32 @@ def create_tasks_page(app):
                 self.tasks[date] = []
             self.tasks[date].append({"name": task_name, "subject": subject, "color": color})
 
-        # ==============================================
-        # Section 12.1.2: Helper Functions
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.2: Helper Functions
+        # ----------------------------------------------
 
-        def darken_color(hex_color, factor=0.45):
+        def darken_color(self, hex_color, factor=0.45):
             hex_color = hex_color.lstrip("#")
             rgb = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
             darkened_rgb = tuple(max(0, int(c * factor)) for c in rgb)
             return "#{:02x}{:02x}{:02x}".format(*darkened_rgb)
 
-        # ==============================================
-        # Section 12.1.3: Monthly View Formatting
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.3: Monthly View Formatting
+        # ----------------------------------------------
 
-        def formatmonth(self, master, year, month):
+        def formatmonth(self, master, year, month, date_offset = 0):
+            # Calculate the target year and month based on the offset
+            # target_date = datetime(year, month, 1) + timedelta(days=date_offset * 30)
+            # year = target_date.year
+            # month = target_date.month
+
             # Check if the frame exists and destroy it if necessary
             if hasattr(self, 'frame') and self.frame.winfo_exists():
                 self.frame.destroy()
 
             dates = self.monthdatescalendar(year, month)
-            self.frame = ttk.Frame(master, bootstyle=PRIMARY)
+            self.frame = ttk.Frame(master, bootstyle="primary")
             self.labels = []
 
             today = datetime.now().date()
@@ -1332,7 +1323,7 @@ def create_tasks_page(app):
                     font=("Helvetica", 10, "bold"),
                     width=4,
                     anchor="center",
-                    bootstyle=SECONDARY
+                    bootstyle="secondary"
                 ).grid(row=0, column=c, padx=5, pady=(5, 5))
 
             # Configure columns to expand
@@ -1342,7 +1333,7 @@ def create_tasks_page(app):
             for r, week in enumerate(dates, start=1):
                 labels_row = []
                 for c, date in enumerate(week):
-                    cell_frame = ttk.Frame(self.frame, width=14, height=14  , bootstyle=PRIMARY)
+                    cell_frame = ttk.Frame(self.frame, width=14, height=14  , bootstyle="primary")
                     cell_frame.grid(row=r, column=c, padx=1, pady=10, sticky="nsew")
 
                     label = ttk.Label(
@@ -1351,7 +1342,7 @@ def create_tasks_page(app):
                         font=("Helvetica", 9),
                         width=4,
                         anchor="center",
-                        bootstyle=SECONDARY
+                        bootstyle="secondary"
                     )
                     label.pack(expand=True, fill="both")
 
@@ -1372,12 +1363,12 @@ def create_tasks_page(app):
                         )
 
                     if date in self.tasks:
-                        task_frame = ttk.Frame(cell_frame, bootstyle=PRIMARY)
+                        task_frame = ttk.Frame(cell_frame, bootstyle="primary")
                         task_frame.pack(fill="both", expand=True)
                         max_tasks_per_row = 2
 
                         num_tasks = len(self.tasks[date])
-                        rows_needed = (num_tasks + max_tasks_per_row - 1) // max_tasks_per_row 
+                        rows_needed = (num_tasks + max_tasks_per_row - 1) // max_tasks_per_row
 
                         for row in range(rows_needed):
                             task_frame.grid_rowconfigure(row, weight=1, uniform="equal")
@@ -1385,16 +1376,17 @@ def create_tasks_page(app):
                             task_frame.grid_columnconfigure(col, weight=1, uniform="equal")
 
                         if num_tasks == 1:
-                            task_button = ctk.CTkButton(
-                                master=task_frame,
-                                text="",  # Optional: Add task description
-                                fg_color=task["color"],
-                                hover_color=task["color"],
-                                corner_radius=1,
-                                width = 250,
-                                height =5
-                            )
-                            task_button.pack(fill="both", expand=True, padx=2, pady=2)
+                            for task in self.tasks[date]:
+                                task_button = ctk.CTkButton(
+                                    master=task_frame,
+                                    text="",  # Optional: Add task description
+                                    fg_color=task["color"],
+                                    hover_color=self.darken_color(task["color"]),
+                                    corner_radius=1,
+                                    width = 250,
+                                    height =5
+                                )
+                                task_button.pack(fill="both", expand=True, padx=2, pady=2)
                         else:
                             for i, task in enumerate(self.tasks[date]):
                                 row = i // max_tasks_per_row
@@ -1404,7 +1396,7 @@ def create_tasks_page(app):
                                     master=task_frame,
                                     text="",
                                     fg_color=task["color"],
-                                    hover_color=task["color"],
+                                    hover_color=self.darken_color(task["color"]),
                                     width=250,
                                     height=5,
                                     corner_radius=1
@@ -1416,12 +1408,17 @@ def create_tasks_page(app):
 
             return self.frame
 
-        # ==============================================
-        # Section 12.1.4: Weekly View Formatting
-        # ==============================================
+        # ----------------------------------------------
+        # Section 11.1.4: Weekly View Formatting
+        # ----------------------------------------------
 
-        def formatweek(self, master, year, month):
+        def formatweek(self, master, year, month, date_offset = 0):
             today = datetime.now().date()
+
+            # Calculate the start of the target week based on the offset
+            target_date = datetime(year, month, 1) + timedelta(weeks=date_offset)
+            start_of_week = target_date - timedelta(days=target_date.weekday())
+            self.current_week = start_of_week
 
             # Check if the container exists and destroy it if necessary
             if hasattr(self, 'container') and self.container.winfo_exists():
@@ -1485,116 +1482,58 @@ def create_tasks_page(app):
                             master=task_button,
                             text=task.get("subject"),
                             font=("Helvetica", 6),
-                            text_color=TkinterCalendar.darken_color(task["color"]),
+                            text_color=self.darken_color(task["color"]),
                         )
                         subject_label.pack(side="bottom", padx=1, pady=(0, 0))
 
             return self.container
 
     # ==============================================
-    # Section 12.2: Calendar Initialization and Display
+    # Section 11.2: Calendar Initialization and Display
     # ==============================================
 
-    current_year = datetime.now().year
-    current_month = datetime.now().month
     tkcalendar = TkinterCalendar()
     frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
     frame.pack_forget()
 
     # ==============================================
-    # Section 12.3: Calendar Update Functions
+    # Section 11.3: Calendar Update Functions
     # ==============================================
 
-    def update_month_calendar():
+    def update_month_calendar(date_offset=0):
         global frame, current_month, current_year
-        current_year = datetime.now().year
-        current_month = datetime.now().month
-        frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
-        frame.pack(pady=10, fill="both", expand=True) 
+        
+        # Convert current year/month to a continuous month index
+        current_month_index = (current_year * 12) + (current_month - 1)
+        print(current_month_index)
+        
+        # Add the offset (in months) to the current month index
+        target_month_index = current_month_index + date_offset
+        
+        # Convert back to year and month
+        target_year, target_month = divmod(target_month_index, 12)
+        target_year = target_year
+        target_month = target_month + 1  # because months are 1-based
 
-    def update_week_calendar():
+        # Now just call formatmonth with the correct year and month
+        frame = tkcalendar.formatmonth(frame_current_tasks, target_year, target_month)
+        frame.pack(pady=10, fill="both", expand=True)
+
+
+
+    def update_week_calendar(date_offset = 0):
         global frame
-        if not tkcalendar.current_week:
-            tkcalendar.current_week = datetime.now().date() - timedelta(days=datetime.now().weekday())
-        week_number = tkcalendar.current_week.isocalendar()[1]  
+        # Calculate the start of the target week based on the offset
+        target_date = datetime.now().date() + timedelta(weeks=date_offset)
+        tkcalendar.current_week = target_date - timedelta(days=target_date.weekday())
+        
+        week_number = tkcalendar.current_week.isocalendar()[1]
         year = tkcalendar.current_week.year
-        frame = tkcalendar.formatweek(frame_current_tasks, tkcalendar.current_week.year, tkcalendar.current_week.month)
-        frame.pack(pady=10, fill="both", expand=True) 
+        frame = tkcalendar.formatweek(frame_current_tasks, year, tkcalendar.current_week.month, date_offset)
+        frame.pack(pady=10, fill="both", expand=True)
 
     # ==============================================
-    # Section 12.4: Navigation Functions
-    # ==============================================
-
-    def prev_month():
-        global current_year, current_month
-        current_month -= 1
-        if current_month == 0:
-            current_month = 12
-            current_year -= 1
-        update_month_calendar()
-
-    def next_month():
-        global current_year, current_month
-        current_month += 1
-        if current_month == 13:
-            current_month = 1
-            current_year += 1
-        update_month_calendar()
-
-    def prev_week():
-        if tkcalendar.current_week:
-            tkcalendar.current_week -= timedelta(weeks=1)
-        else:
-            tkcalendar.current_week = datetime.now().date() - timedelta(weeks=1)
-        update_week_calendar()
-
-    def next_week():
-        if tkcalendar.current_week:
-            tkcalendar.current_week += timedelta(weeks=1)
-        else:
-            tkcalendar.current_week = datetime.now().date() + timedelta(weeks=1)
-        update_week_calendar()
-
-    # ==============================================
-    # Section 12.5: View Switching
-    # ==============================================
-
-    current_view = None
-
-    def show_month_view():
-        global current_view, frame
-        current_view = "month"
-        current_year = datetime.now().year
-        current_month = datetime.now().month  # Reset to curret when we switch
-        frame = tkcalendar.formatmonth(frame_current_tasks, current_year, current_month)
-        frame.pack(pady=20, fill="both", expand=True) 
-        update_navigation_buttons()  # Update navigation buttons so that it knows what to switch
-        update_month_calendar() 
-
-    def show_week_view():
-        global current_view, frame
-        current_view = "week"
-        tkcalendar.current_week = datetime.now().date() - timedelta(days=datetime.now().weekday())  # Refreshes the week calendar with the current week
-        frame = tkcalendar.formatweek(frame_current_tasks, current_year, current_month)
-        frame.pack(pady=20, fill="both", expand=True) 
-        update_navigation_buttons() 
-        update_week_calendar() 
-
-    # ==============================================
-    # Section 12.6: Navigation Button Update
-    # ==============================================
-
-    #so depending on what view we are in, it uses that button
-    def update_navigation_buttons():
-        if current_view == "month":
-            button_prev.configure(command=prev_month)
-            button_next.configure(command=next_month)
-        elif current_view == "week":
-            button_prev.configure(command=prev_week)
-            button_next.configure(command=next_week)
-
-    # ==============================================
-    # Section 12.7: Sample Tasks
+    # Section 11.4: Sample Tasks
     # ==============================================
 
     # Sample tasks with descriptions for week view
@@ -1603,21 +1542,5 @@ def create_tasks_page(app):
     tkcalendar.name_task(datetime(2024, 11, 25).date(), "Assignment", "CMSC 123", "#FFD700")
     tkcalendar.name_task(datetime(2024, 12, 8).date(), "Examination", "CMSC 130", "#DC7373")
     tkcalendar.name_task(datetime(2024, 12, 5).date(), "Evaluation", "Ethics", "#90EE90")
-
-    # ==============================================
-    # Section 12.8: Calendar Toggle Function
-    # ==============================================
-
-    def toggle_calendar():
-        """Toggle the visibility of the calendar frame."""
-        global frame  # Declare frame as global
-        if frame and frame.winfo_ismapped():  # If the frame is currently displayed
-            frame.pack_forget()  # Hide the frame
-        else:
-            # Show the calendar based on the current view
-            if current_view == "month":
-                update_month_calendar()
-            elif current_view == "week":
-                update_week_calendar()
 
     return frame_taskpage
