@@ -1062,7 +1062,7 @@ def create_tasks_page(app):
                     target_month = datetime.now().date() + timedelta(days=date_offset * 30)  # Approximation!
                     date_display = target_month.strftime("%B")
 
-            
+
 
         # Configure the grid to expand and center the widgets (for switcher)
         switcher.grid_columnconfigure(0, weight=0)
@@ -1074,11 +1074,8 @@ def create_tasks_page(app):
         def previous_of():
             toggle_switcher(option, default=False, date_offset= current_offset - 1)
             
-
         def next_of():
             toggle_switcher(option, default=False, date_offset= current_offset + 1)
-            
-        
 
         # Create Previous button
         previous = ctk.CTkButton(
@@ -1116,6 +1113,7 @@ def create_tasks_page(app):
             command=next_of  # Link to your next_of function
         )
         next.grid(row=0, column=3, padx=20, pady=5)
+        
 
     def show_day_view_option(given_date:datetime = datetime.now().date(), date_offset: int = 0):
         # Populate tasks or show generic message
