@@ -4,6 +4,7 @@ import customtkinter as ctk
 from tkinter import StringVar
 from Tasks import TaskManager
 from loadingOverlay import LoadingOverlay
+import matplotlib.pyplot as plt
 
 # Paths
 OUTPUT_PATH = Path(__file__).parent
@@ -121,4 +122,11 @@ radio_button_3.pack(side="left", padx=0)
 show_page("2")
 
 # Start the application
+
+def on_closing():
+    # Destroy the app and any background resources
+    plt.close('all')  # Close any matplotlib figures
+    app.destroy()
+
+app.protocol("WM_DELETE_WINDOW", on_closing)    
 app.mainloop()
