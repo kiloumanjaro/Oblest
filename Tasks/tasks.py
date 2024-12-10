@@ -411,18 +411,34 @@ def create_tasks_page(app):
         Tasks_Completed_Text.pack(side='left', anchor='sw', pady=(0,15), padx=(5,0))
 
 
-        # ==============================================
-        # Section 3: Labels
-        # ==============================================
-
-        tasks_labels = ctk.CTkFrame(
+        # Unified container for labels and data
+        stats_container = ctk.CTkFrame(
             master=tasks_top,
-            fg_color="#f7f7f7",  # Frame color
-            corner_radius=30,    # Rounded corners
+            fg_color="white",
+            corner_radius=0
         )
-        tasks_labels.pack(fill="x", padx=20, pady=(10,0), side="top")
+        stats_container.pack(fill="x", padx=20, pady=(10,0), side="top")
 
-        # Add three buttons: Time, Average, and Streak
+        # Configure a 3-column grid in the container to align labels and data
+        stats_container.grid_columnconfigure(0, weight=1)
+        stats_container.grid_columnconfigure(1, weight=1)
+        stats_container.grid_columnconfigure(2, weight=1)
+
+        # ==============================================
+        # Row 1: Labels (Time, Average, Streak)
+        # ==============================================
+        tasks_labels = ctk.CTkFrame(
+            master=stats_container,
+            fg_color="#f7f7f7",
+            corner_radius=30
+        )
+        tasks_labels.grid(row=0, column=0, columnspan=3, sticky="ew")
+
+        # Configure tasks_labels for a 3-column layout
+        tasks_labels.grid_columnconfigure(0, weight=1)
+        tasks_labels.grid_columnconfigure(1, weight=1)
+        tasks_labels.grid_columnconfigure(2, weight=1)
+
         button_time = ctk.CTkButton(
             master=tasks_labels,
             text="Time",
@@ -433,10 +449,9 @@ def create_tasks_page(app):
             width=90,
             height=35,
             corner_radius=30,
-            font=("Helvetica", 11)  # Specify the font and size
+            font=("Helvetica", 11)
         )
-        button_time.pack(side="left", padx=(18,0), pady=0)
-
+        button_time.grid(row=0, column=0, sticky="ew", padx=(18,0), pady=0)
 
         button_average = ctk.CTkButton(
             master=tasks_labels,
@@ -447,10 +462,9 @@ def create_tasks_page(app):
             width=105,
             height=35,
             corner_radius=10,
-            font=("Helvetica", 11)  # Specify the font and size
+            font=("Helvetica", 11)
         )
-        button_average.pack(side="left", padx=(12, 8), pady=0)
-
+        button_average.grid(row=0, column=1, sticky="ew", padx=(12,8), pady=0)
 
         button_streak = ctk.CTkButton(
             master=tasks_labels,
@@ -461,44 +475,49 @@ def create_tasks_page(app):
             width=90,
             height=35,
             corner_radius=10,
-            font=("Helvetica", 11)  # Specify the font and size
+            font=("Helvetica", 11)
         )
-        button_streak.pack(side="right", padx=(0,18), pady=0)
+        button_streak.grid(row=0, column=2, sticky="ew", padx=(0,18), pady=0)
 
 
         # ==============================================
-        # Section 3: Data
+        # Row 2: Data (numeric values)
         # ==============================================
-
         font_settings_value = ("Helvetica", 15)  # Font for the numeric values
-        font_settings_unit = ("Helvetica", 13)  # Font for the units
+        font_settings_unit = ("Helvetica", 13)   # Font for the units
 
         data_entry = ctk.CTkFrame(
-            master=tasks_top,
-            fg_color="white",  # Frame color
-            corner_radius=0,  # Rounded corners
+            master=stats_container,
+            fg_color="white",
+            corner_radius=0
         )
-        data_entry.pack(fill="x", padx=20, pady=(3, 0), side="top")
+        data_entry.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(3,0))
 
-        # Time Label Frame
+        data_entry.grid_columnconfigure(0, weight=1)
+        data_entry.grid_columnconfigure(1, weight=1)
+        data_entry.grid_columnconfigure(2, weight=1)
+
+        # Time Frame
         time_frame = ctk.CTkFrame(data_entry, fg_color="white", corner_radius=0)
         time_frame.grid_rowconfigure(0, weight=1)
-        time_frame.grid_columnconfigure((0, 1), weight=1)  # Configure grid to center labels
+        time_frame.grid_columnconfigure((0, 1), weight=1)
         time_label_value = ctk.CTkLabel(time_frame, text="400", text_color="black", font=font_settings_value)
         time_label_unit = ctk.CTkLabel(time_frame, text="mins", text_color="gray", font=font_settings_unit)
-        time_label_value.grid(row=0, column=0, padx=(0, 5), sticky="e")  # Use grid to center
+        time_label_value.grid(row=0, column=0, padx=(0, 5), sticky="e")
         time_label_unit.grid(row=0, column=1, sticky="w")
+        time_frame.grid(row=0, column=0, padx=(15, 5), pady=0, sticky="nsew")
 
-        # Average Label Frame
-        average_frame = ctk.CTkFrame(data_entry, fg_color="white", corner_radius=0, width=80)
+        # Average Frame
+        average_frame = ctk.CTkFrame(data_entry, fg_color="white", corner_radius=0)
         average_frame.grid_rowconfigure(0, weight=1)
         average_frame.grid_columnconfigure((0, 1), weight=1)
         average_label_value = ctk.CTkLabel(average_frame, text="12", text_color="black", font=font_settings_value)
         average_label_unit = ctk.CTkLabel(average_frame, text="mins/task", text_color="gray", font=font_settings_unit)
         average_label_value.grid(row=0, column=0, padx=(0, 5), sticky="e")
         average_label_unit.grid(row=0, column=1, sticky="w")
+        average_frame.grid(row=0, column=1, padx=5, pady=0, sticky="nsew")
 
-        # Streak Label Frame
+        # Streak Frame
         streak_frame = ctk.CTkFrame(data_entry, fg_color="white", corner_radius=0)
         streak_frame.grid_rowconfigure(0, weight=1)
         streak_frame.grid_columnconfigure((0, 1), weight=1)
@@ -506,16 +525,8 @@ def create_tasks_page(app):
         streak_label_unit = ctk.CTkLabel(streak_frame, text="days", text_color="gray", font=font_settings_unit)
         streak_label_value.grid(row=0, column=0, padx=(0, 5), sticky="e")
         streak_label_unit.grid(row=0, column=1, sticky="w")
-
-        # Configure grid columns to distribute space evenly
-        data_entry.grid_columnconfigure(0, weight=1)
-        data_entry.grid_columnconfigure(1, weight=1)
-        data_entry.grid_columnconfigure(2, weight=1)
-
-        # Place frames in the grid
-        time_frame.grid(row=0, column=0, padx=(15, 5), pady=0, sticky="nsew")
-        average_frame.grid(row=0, column=1, padx=5, pady=0, sticky="nsew")
         streak_frame.grid(row=0, column=2, padx=(5, 15), pady=0, sticky="nsew")
+
 
 
         # ==============================================
