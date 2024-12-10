@@ -633,7 +633,7 @@ def create_tasks_page(app):
     tasks_top.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
 
     tasks_middle = ttk.Frame(frame_tasks, bootstyle="primary", padding=0)
-    tasks_middle.pack(fill="both", expand="yes", padx=0, pady=0, side="top")
+    tasks_middle.pack(fill="x", expand=False, padx=0, pady=0, side="top", anchor="n")
 
     tasks_bottom = ttk.Frame(frame_tasks, bootstyle="dark", padding=0)
     tasks_bottom.pack(fill="both", expand="yes", padx=20, pady=0, side="top")
@@ -939,19 +939,23 @@ def create_tasks_page(app):
     # Section 8: Tasks Display: Day, Week, Month
     # ==============================================
 
+    # Create the higher frame
+    higher_frame = ctk.CTkFrame(tasks_bottom, bg_color="white", fg_color="white", height = 420)
+    higher_frame.pack(fill="x", expand=False)
+
     frame_current_tasks = ctk.CTkScrollableFrame(
-        master=tasks_bottom,
+        master=higher_frame,
         bg_color="transparent",
         corner_radius=0,
         fg_color="white",
-        height = 390,
+        height = 420,
         border_color="#FFFFFF",
         scrollbar_button_color="white",       # Default color of scrollbar button     
         scrollbar_button_hover_color="#555555"
     )
     # Initially hide the frame (it will only appear when "Day" is selected)
     frame_current_tasks.pack(pady=(0, 0), padx=(12, 18), fill="both", side="top", expand=YES)
-
+    
     original_scrollbar_grid_info = frame_current_tasks._scrollbar.grid_info()
 
     def toggle_scrollbar(enable):
@@ -1009,12 +1013,20 @@ def create_tasks_page(app):
         )
 
     switcher = create_switcher()
-    switcher.pack(pady=(0, 0), padx=(0, 0), fill="both", side="top", expand=False)
+    switcher.pack(pady=(10, 0), padx=(0, 0), fill="both", side="top", expand=False)
 
     def toggle_switcher(option, default=True, date_offset=0):
         """
         Handles switching between Day, Week, and Month views, including UI updates and button setup.
         """
+        frame_current_tasks.pack_forget()
+        loading_overlay.pack(fill="both", expand=True)
+        loading_overlay.lift()
+        loading_text = ctk.CTkLabel(loading_overlay, bg_color="white", fg_color="white", text_color="black", text="Loading...", height=400, font=("Helvetica", 18), anchor="center" )
+        loading_text.pack(pady=(10, 10))
+        
+        frame_current_tasks.pack(pady=(0, 0), padx=(0, 0), fill="both", expand=True)
+        loading_overlay.after(100, lambda: loading_overlay.destroy())
 
         # Clear existing widgets in frame_current_tasks
         for widget in frame_current_tasks.winfo_children():
