@@ -1330,28 +1330,19 @@ def create_tasks_page(app):
     # ==============================================
     
     def edit_task(task: Task):
-        """
-        Opens a form to edit an existing task.
-        """
         frame_tasks.pack_forget()
         frame_button.pack_forget()
 
         frame_edit_task = ttk.Frame(frame_taskpage, bootstyle="primary")
         frame_edit_task.pack(fill="both", expand=True)
 
-        # ----------------------------------------------
-        # 9.5.1: Form Field Creation
-        # ----------------------------------------------
         # Task Title Field
         ttk.Label(frame_edit_task, text="Task Title:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         task_title_entry = ttk.Entry(frame_edit_task, width=50, bootstyle="danger")
-        task_title_entry.insert(0, task.name)  # Pre-fill with existing title
+        task_title_entry.insert(0, task.name)
         task_title_entry.pack(pady=(0,10))
 
-        date_placeholder = None
-
-        if task.deadline:
-            date_placeholder = task.deadline.date()
+        date_placeholder = task.deadline.date() if task.deadline else None
 
         # Deadline Date Field
         ttk.Label(frame_edit_task, text="Deadline Date:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
@@ -1362,15 +1353,11 @@ def create_tasks_page(app):
             startdate=date_placeholder
         )
         deadline_date_entry.pack(pady=(0,10))
-        
-        # Test
-        print(task.deadline)
-        
-        # Status Field
+
+        # Status Field (For testing/demo)
         ttk.Label(frame_edit_task, text="Status: [FOR TESTING ONLY]", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
-        status_var = tk.StringVar()
-        status_var.set(task.status.value)  # Set initial value to task's current status
-        status_options = [status.value for status in TaskStatus][:2]
+        status_var = tk.StringVar(value=task.status.value)
+        status_options = [s.value for s in TaskStatus][:2]  # "done", "not_done"
         status_dropdown = ctk.CTkComboBox(
             master=frame_edit_task,
             corner_radius=20,
@@ -1386,13 +1373,10 @@ def create_tasks_page(app):
         )
         status_dropdown.pack(pady=(0,10))
 
-        # Course Selection Field
+        # Course Field
         ttk.Label(frame_edit_task, text="Course:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
-        courses = all_tasks.get_courses()
-        if not courses:
-            courses = ["general"]
-        course_var = tk.StringVar()
-        course_var.set(task.course_tag)  # Pre-select the task's current course
+        courses = all_tasks.get_courses() or ["general"]
+        course_var = tk.StringVar(value=task.course_tag)
         course_dropdown = ctk.CTkComboBox(
             master=frame_edit_task,
             corner_radius=20,
@@ -1411,7 +1395,6 @@ def create_tasks_page(app):
         # Difficulty Rating
         def update_label(val):
             difficulty_rating_label.configure(text=f"Difficulty Rating: {round(float(val))}", font=('Helvetica', 10, 'bold'))
-
         difficulty_rating_label = ttk.Label(frame_edit_task, text=f"Difficulty Rating: {task.difficulty_rating}", font=('Helvetica', 10, 'bold'))
         difficulty_rating_label.pack(pady=(10,2))
 
@@ -1423,26 +1406,17 @@ def create_tasks_page(app):
             command=update_label,
             bootstyle="danger"
         )
-        difficulty_rating_slider.set(task.difficulty_rating)  # Set the initial value from the task
+        difficulty_rating_slider.set(task.difficulty_rating)
         difficulty_rating_slider.pack(pady=(0,10))
 
         # Content Field
         ttk.Label(frame_edit_task, text="Content:", font=('Helvetica', 10, 'bold')).pack(pady=(10,2))
         content_text = ScrolledText(frame_edit_task, width=50, height=10, bootstyle="danger")
-        content_text.insert("1.0", task.text_content)  # Pre-fill with existing content
+        content_text.insert("1.0", task.text_content)
         content_text.pack(pady=(0,10))
-        
-        # ----------------------------------------------
-        # 9.5.2: Form Action Functions
-        # ----------------------------------------------
 
         def update_task():
-            """
-            Updates the task with the new values from the form.
-            """
-            nonlocal task  # Access the task variable from the outer scope
-
-            # Get updated values from form fields
+            nonlocal task
             new_title = task_title_entry.get()
             new_deadline_str = deadline_date_entry.entry.get()
             new_course = course_var.get()
@@ -1450,46 +1424,32 @@ def create_tasks_page(app):
             new_status_str = status_var.get()
             new_difficulty_rating = int(difficulty_rating_slider.get())
 
-            # Validate deadline date
+            # Validate deadline
             try:
-                if new_deadline_str:
-                    new_deadline = datetime.strptime(new_deadline_str, "%Y-%m-%d")
-                else:
-                    new_deadline = None
+                new_deadline = datetime.strptime(new_deadline_str, "%Y-%m-%d") if new_deadline_str else None
             except ValueError:
-                simpledialog.messagebox.showerror(
-                    "Invalid Date",
-                    "Please enter a valid date in the format YYYY-MM-DD."
-                )
+                simpledialog.messagebox.showerror("Invalid Date", "Please enter a valid date in the format YYYY-MM-DD.")
                 return
 
-            # Convert status string back to TaskStatus enum
+            # Convert status string to enum
             try:
                 new_status = TaskStatus(new_status_str)
             except ValueError:
                 simpledialog.messagebox.showerror("Invalid Status", "Please select a valid status.")
                 return
 
-            # --- COURSE EXISTENCE CHECK WITH CONFIRMATION ---
+            # If course doesn't exist, offer to create it
             if new_course not in all_tasks.get_courses():
-                if not simpledialog.messagebox.askyesno(
-                    "Course Not Found",
-                    f"The course '{new_course}' does not exist. Do you want to create it?"
-                ):
-                    # User chose not to create the course, so return to the form
+                if not simpledialog.messagebox.askyesno("Course Not Found", f"The course '{new_course}' does not exist. Do you want to create it?"):
                     return
-
-                # User chose to create the course
                 try:
                     all_tasks.add_course(new_course)
-                    course_dropdown.configure(values=all_tasks.get_courses())  # Update dropdown values
-                    course_var.set(new_course)  # Set the new course as selected
+                    course_dropdown.configure(values=all_tasks.get_courses())
+                    course_var.set(new_course)
                 except ValueError as e:
                     simpledialog.messagebox.showerror("Error Creating Course", str(e))
                     return
-            # --- END OF COURSE EXISTENCE CHECK ---
 
-            # Store old course tag to help with moving task between courses
             old_course = task.course_tag
 
             # Update task properties
@@ -1497,49 +1457,35 @@ def create_tasks_page(app):
             task.deadline = new_deadline
             task.course_tag = new_course
             task.text_content = new_content
-            
-            # Determine if task status needs to be updated and handle it
-            # This is only executed if the new status is different from the old status
-            if new_status != task.status:
-                try:
-                    if new_status == TaskStatus.DONE:
-                        all_tasks.courses[new_course].mark_task_complete(task.id)  # Mark as complete
-                    elif new_status == TaskStatus.NOT_DONE:
-                        all_tasks.courses[new_course].mark_task_incomplete(task.id)  # Mark as incomplete
-                except ValueError as e:
-                    simpledialog.messagebox.showerror("Error Updating Task Status", str(e))
-                    return
-            else:
-                # If the status hasn't changed, just update the other task properties
-                task.status = new_status
-
+            task.status = new_status
             task.difficulty_rating = new_difficulty_rating
 
-            # Update the task in the TaskManager (handling potential course change)
-            try:
-                if old_course != new_course:
-                    # Move the task to the new course
-                    all_tasks.move_task(task.id, old_course, new_course)
-                else:
-                    # Update the task in the current course
+            # If the course changed, move the task first
+            if old_course != new_course:
+                if not all_tasks.move_task(task.id, old_course, new_course):
+                    simpledialog.messagebox.showerror("Error Updating Task", "Failed to move task to the new course.")
+                    return
+                # After moving the task to the new course, we must update it there
+                try:
                     all_tasks.courses[new_course].update_task(task)
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Updating Task", str(e))
+                    return
+            else:
+                # Update task directly in the current course
+                try:
+                    all_tasks.courses[new_course].update_task(task)
+                except ValueError as e:
+                    simpledialog.messagebox.showerror("Error Updating Task", str(e))
+                    return
 
-            except ValueError as e:
-                simpledialog.messagebox.showerror("Error Updating Task", str(e))
-                return
-
-            # Refresh task list display
+            # Refresh display
             refresh_task_list(new_course, new_deadline)
-
-            # Hide the edit form and show the task list/buttons
             frame_edit_task.pack_forget()
             frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")
             frame_tasks.pack(fill="both", expand=True)
-            
-            # Updates the count of completed tasks
-            # global Tasks_Completed
-            
             Tasks_Completed.configure(text=f"{all_tasks.get_num_completed_tasks()}")
+
 
         def cancel_edit():
             """
