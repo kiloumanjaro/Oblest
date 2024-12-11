@@ -30,6 +30,10 @@ ASSETS_PATH = OUTPUT_PATH / "assets"
 
 all_tasks = TaskManager()
 
+def update_radial_progress_bar():
+    return int(all_tasks.get_num_completed_tasks() / all_tasks.get_num_total_tasks() * 100)
+
+
 # Uncomment this following function if wanting to reindex tasks
 # all_tasks.reindex_task_ids()
 
@@ -826,6 +830,7 @@ def create_tasks_page(app):
                 simpledialog.messagebox.showerror("Error Adding Task", str(e))
                 return
 
+            update_radial_progress_bar()
             refresh_task_list(course, deadline_date)
 
             # Hide the form and show the task list/buttons
@@ -1494,6 +1499,7 @@ def create_tasks_page(app):
                     return
 
             # Refresh display
+            update_radial_progress_bar()
             refresh_task_list(new_course, new_deadline)
             frame_edit_task.pack_forget()
             frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")

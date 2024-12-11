@@ -4,9 +4,18 @@ from tkinter import StringVar, BooleanVar
 import customtkinter as ctk
 import random
 from datetime import datetime
+from Tasks.tasks import update_radial_progress_bar
 
+
+meter = None
+radial_progress_bar = 0
+def update_meter():
+    global meter
+    meter.configure(amountused=update_radial_progress_bar())
 
 def create_home_page(app):
+    global radial_progress_bar, meter
+    
     ASSETS_PATH = Path(__file__).parent / "assets"
     MOTIVATIONS_FILE = ASSETS_PATH / "motivations.txt"
 
@@ -26,6 +35,7 @@ def create_home_page(app):
     dayspassed = 90
     rank = "diamond"
     rankpts = 78
+    
     left_button_state = BooleanVar(value=False)
     right_button_state = BooleanVar(value=False)
 
@@ -72,9 +82,9 @@ def create_home_page(app):
         metersize=264,
         meterthickness=30,
         padding=0,
-        amountused=int((dayspassed / totaldays) * 100),
+        amountused=radial_progress_bar,
         metertype="full",
-        interactive=True,
+        interactive=False,
         textfont=['Helvetica', 40, 'normal']
     )
     meter.configure(bootstyle="danger")

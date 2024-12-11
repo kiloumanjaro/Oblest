@@ -396,6 +396,10 @@ class TaskManager:
     def get_courses(self) -> List[str]:
         """Returns a list of all course names."""
         return list(self.courses.keys())
+    
+    def get_courses_dict(self) -> Dict[str, CourseManager]:
+        """Returns a list of all course names."""
+        return self.courses
 
     def load_courses(self) -> None:
         """Load all course managers"""
@@ -507,6 +511,10 @@ class TaskManager:
     def get_num_completed_tasks(self) -> int:
         """Returns the number of completed tasks."""
         return sum(course.get_completed_task_count() for course in self.courses.values())
+    
+    def get_num_total_tasks(self) -> int:
+        """Returns the number of tasks."""
+        return sum(course.task_amount() for course in self.courses.values())
 
     def ensure_course_color(self, course_name: str) -> None:
         """Ensures that a course has a color assigned in the metadata."""

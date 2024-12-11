@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 OUTPUT_PATH = Path(__file__).parent
 
 # Import page creation functions
-from Home.home import create_home_page
+from Home.home import create_home_page, update_meter
 from Productivity.productivity import create_productivity_page
 from Tasks.tasks import create_tasks_page
 
@@ -50,6 +50,7 @@ def show_page(page_number):
 
     # Use after() to delay hiding the overlay 
     # (adjust delay as needed for your page loading time)
+    update_meter()
     app.after(150, lambda: overlay.hide())
 
 def switch_page(page_number, overlay):
