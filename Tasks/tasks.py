@@ -1021,6 +1021,21 @@ def create_tasks_page(app):
     switcher = create_switcher()
     switcher.pack(pady=(10, 0), padx=(0, 0), fill="both", side="top", expand=False)
 
+    def offset_calculator(given_date:datetime):
+        offset = 0
+        if given_date:
+            offset = (given_date + timedelta(days=1)) - datetime.now() 
+            
+        print(f"Offset: {offset.days}")
+        print(f"Given Date: {given_date}")
+        print(f"Now: {datetime.now()}")
+        return offset.days
+    
+    def day_toggle_switch(given_date:datetime):
+        date_offset = offset_calculator(given_date)
+        button1.set("Day")
+        toggle_switcher("Day", default=False, date_offset=date_offset)
+        
     def toggle_switcher(option, default=True, date_offset=0):
         """
         Handles switching between Day, Week, and Month views, including UI updates and button setup.
@@ -1681,30 +1696,32 @@ def create_tasks_page(app):
                             task_frame.grid_columnconfigure(col, weight=1, uniform="equal")
 
                         if num_tasks == 1:
-                            for task in tasks_for_date:
+                            for single_task in tasks_for_date:
                                 task_button = ctk.CTkButton(
                                     master=task_frame,
                                     text="",  # Display task name
-                                    fg_color=all_tasks.get_course_color(task.course_tag),
-                                    hover_color=self.darken_color(all_tasks.get_course_color(task.course_tag)),
+                                    fg_color=all_tasks.get_course_color(single_task.course_tag),
+                                    hover_color=self.darken_color(all_tasks.get_course_color(single_task.course_tag)),
                                     corner_radius=1,
                                     width=250,
-                                    height=5
+                                    height=5,
+                                    command=lambda d=single_task.deadline: day_toggle_switch(d)
                                 )
                                 task_button.pack(fill="both", expand=True, padx=2, pady=2)
                         else:
-                            for i, task in enumerate(tasks_for_date):
+                            for i, loop_task in enumerate(tasks_for_date):
                                 row = i // max_tasks_per_row
                                 col = i % max_tasks_per_row
 
                                 task_button = ctk.CTkButton(
                                     master=task_frame,
                                     text="",  # Display task name
-                                    fg_color=all_tasks.get_course_color(task.course_tag),
-                                    hover_color=self.darken_color(all_tasks.get_course_color(task.course_tag)),
+                                    fg_color=all_tasks.get_course_color(loop_task.course_tag),
+                                    hover_color=self.darken_color(all_tasks.get_course_color(loop_task.course_tag)),
                                     width=250,
                                     height=5,
-                                    corner_radius=1
+                                    corner_radius=1,
+                                    command=lambda d=loop_task.deadline: day_toggle_switch(d)
                                 )
                                 task_button.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
 
@@ -1777,6 +1794,7 @@ def create_tasks_page(app):
                 # print(date.date())
 
                 # Display tasks if any
+# Display tasks if any
                 if tasks_for_date:
                     for i, task in enumerate(tasks_for_date):
                         # Create a frame for each task
@@ -1788,14 +1806,17 @@ def create_tasks_page(app):
                         )
                         task_button.pack(fill="x", expand=False, pady=1)
 
-                        # Task name
-                        name_label = ctk.CTkLabel(
+                        # Task name button
+                        name_button = ctk.CTkButton(
                             master=task_button,
                             text=task.name.split()[0],
                             font=("Helvetica", 12, "bold"),
-                            text_color="black"
+                            fg_color=all_tasks.get_course_color(task.course_tag),
+                            hover_color=self.darken_color(all_tasks.get_course_color(task.course_tag)),
+                            text_color="black",
+                            command=lambda d=task.deadline: day_toggle_switch(d)
                         )
-                        name_label.pack(side="top", padx=1, pady=(0, 0))
+                        name_button.pack(side="top", fill="x", expand=True, padx=1, pady=(0, 0))
 
                         # Task course tag
                         # subject_label = ctk.CTkLabel(
