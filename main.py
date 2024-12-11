@@ -6,6 +6,8 @@ from Tasks import TaskManager
 from loadingOverlay import LoadingOverlay
 import matplotlib.pyplot as plt
 
+from bridge import bridge
+
 # Paths
 OUTPUT_PATH = Path(__file__).parent
 
@@ -23,6 +25,9 @@ screen_height = app.winfo_screenheight()
 
 # Variables
 radio_value = StringVar(value="2")  # Default selected page
+
+# Register the radio_value with the bridge
+bridge.register_radio_var(radio_value)
 
 # Dictionary to store frames for each page
 frames = {}
@@ -52,6 +57,9 @@ def show_page(page_number):
     # (adjust delay as needed for your page loading time)
     update_meter()
     app.after(150, lambda: overlay.hide())
+
+# Register the show_page function with the bridge
+bridge.register_show_page_func(show_page)
 
 def switch_page(page_number, overlay):
     """Switches to the selected page and hides the overlay."""

@@ -12,6 +12,8 @@ import time
 from tkinter import messagebox
 import random
 from Tasks.TaskManager import *
+from bridge import bridge  # Import the bridge
+
 
 
 OUTPUT_PATH = Path(__file__).parent
@@ -28,6 +30,8 @@ remaining_time = 0
 breaks_remaining = 3
 task_course_skiplist = None
 task_all_list = None
+search_entry = None
+listbox = None
 
 def update_task_skiplist():
     global task_course_skiplist, task_all_list
@@ -126,6 +130,10 @@ def create_searchable_combobox(master, course_name = "general", on_results_callb
     )
     search_entry.pack(padx=10, pady=5, fill="x")
 
+    # Register the search_entry and listbox with the bridge
+    bridge.register_search_entry(search_entry)
+
+
     # Bind event to update the list as user types
     search_entry.bind("<KeyRelease>", filter_tasks)
     search_entry.bind("<FocusOut>", hide_listbox)
@@ -145,6 +153,8 @@ def create_searchable_combobox(master, course_name = "general", on_results_callb
     listbox.bind("<<ListboxSelect>>", select_task)
     listbox.bind("<FocusOut>", hide_listbox)
     listbox.bind("<Leave>", hide_listbox)
+    
+    bridge.register_listbox(listbox)
 
     return search_frame
 

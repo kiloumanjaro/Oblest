@@ -19,6 +19,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datetime import datetime
 from matplotlib.dates import DateFormatter, DayLocator
 
+from bridge import set_task_for_productivity
 from datetime import datetime
 from loadingOverlay import *
 
@@ -1259,7 +1260,7 @@ def create_tasks_page(app):
             task_function = lambda: None
         else:
             color_done = "gray96"
-            task_function = lambda: somefunction(task)
+            task_function = lambda: set_task_for_productivity(task)
             # This is where the function to send the task to the productivity mode will be inserted
 
         task_frame = ctk.CTkFrame(
