@@ -54,6 +54,21 @@ class Bridge:
         self.rank_points = new_points
         return new_points
 
+    def register_calculate_new_rank_points_func(self, func):
+        self.calculate_new_rank_points_func = func
+
+    def set_value_for_rank_points_calculation(self, value):
+        self.value_for_rank_points_calculation = value
+
+    def calculate_new_rank_points(self):
+        if not hasattr(self, 'calculate_new_rank_points_func'):
+            raise ValueError("Calculate new rank points function has not been registered with the bridge")
+        if not hasattr(self, 'value_for_rank_points_calculation'):
+            raise ValueError("Value for rank points calculation has not been set")
+        
+        return self.calculate_new_rank_points_func(self.value_for_rank_points_calculation)
+
+
 # Create a global instance of the Bridge
 bridge = Bridge()
 

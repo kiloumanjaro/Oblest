@@ -47,8 +47,16 @@ def calculate_new_rank_points():
         current_points += task.difficulty_rating
     
     new_points = current_points  # Example calculation
-    bridge.update_rank_points(new_points)
+    
+
+    bridge.set_value_for_rank_points_calculation(new_points)
+    bridge.calculate_new_rank_points()
+    
+    print(f"New rank points: {new_points}")
     return new_points
+
+
+
 
 # Uncomment this following function if wanting to reindex tasks
 # all_tasks.reindex_task_ids()

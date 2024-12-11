@@ -20,7 +20,13 @@ RANK_ORDER = {name: i for i, name in enumerate(RANK_NAMES)}
 # Global rank points (this would be dynamically updated in your actual application)
 rankpts = 0  # Example starting points; in a real scenario, this could be updated over time
 
-bridge.register_rank_points(rankpts)
+def calculate_new_rank_points(value):
+    global rankpts
+    # Perform calculations to update the rank points using the value
+    rankpts = value
+    return rankpts
+
+bridge.register_calculate_new_rank_points_func(calculate_new_rank_points)
 
 def rank_threshold_function(rank_order_index, base=100, growth_factor=1.5):
     """
@@ -181,6 +187,7 @@ def create_home_page(app):
 
         # Determine current rank from rankpts
         current_rank = get_current_rank_from_points(rankpts, base, growth_factor)
+        print(rankpts)
         # Calculate the rank progress percentage
         rank_progress = int(calculate_rank_progress(current_rank, rankpts, base, growth_factor))
         meter.configure(amountused=rank_progress)

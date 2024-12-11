@@ -14,7 +14,7 @@ OUTPUT_PATH = Path(__file__).parent
 # Import page creation functions
 from Home.home import create_home_page, update_meter
 from Productivity.productivity import create_productivity_page
-from Tasks.tasks import create_tasks_page
+from Tasks.tasks import create_tasks_page, calculate_new_rank_points
 
 # Create the application window
 app = ttk.Window(themename="custom")  # Using ttkbootstrap for theming
@@ -37,8 +37,8 @@ frames["1"] = create_tasks_page(app)
 frames["2"] = create_home_page(app)
 frames["3"] = create_productivity_page(app)
 
-bridge.calculate_new_rank_points()
-update_meter()
+# bridge.calculate_new_rank_points()
+# update_meter()
 
 # Function to switch pages
 def show_page(page_number):
@@ -58,7 +58,7 @@ def show_page(page_number):
 
     # Use after() to delay hiding the overlay 
     # (adjust delay as needed for your page loading time)
-    bridge.calculate_new_rank_points()
+    calculate_new_rank_points()
     update_meter()
     app.after(150, lambda: overlay.hide())
 
