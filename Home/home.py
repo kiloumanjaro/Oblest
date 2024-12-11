@@ -5,16 +5,74 @@ import customtkinter as ctk
 import random
 from datetime import datetime
 from Tasks.tasks import update_radial_progress_bar
-
+from bridge import bridge
 
 meter = None
 radial_progress_bar = 0
+
+# Non-linear progression parameters
+base = 100         # Base points for the lowest rank
+growth_factor = 1.5 # Growth factor that increases the threshold for each subsequent rank
+
+RANK_NAMES = ["copper", "silver", "gold", "diamond"]
+RANK_ORDER = {name: i for i, name in enumerate(RANK_NAMES)}
+
+# Global rank points (this would be dynamically updated in your actual application)
+rankpts = 0  # Example starting points; in a real scenario, this could be updated over time
+
+bridge.register_rank_points(rankpts)
+
+def rank_threshold_function(rank_order_index, base=100, growth_factor=1.5):
+    """
+    Calculates the total cumulative points required to achieve the rank at rank_order_index.
+    rank_order_index = 0 for copper, 1 for silver, etc.
+    """
+    if rank_order_index < 0:
+        return 0
+    total = 0
+    for i in range(rank_order_index + 1):
+        total += int(base * (growth_factor ** i))
+    return total
+
+def get_current_rank_from_points(rankpts, base=100, growth_factor=1.5):
+    """
+    Given a certain amount of rankpts, determine the user's current rank.
+    If the user's points exceed the top threshold, they remain at the highest rank.
+    """
+    for i, rank_name in enumerate(RANK_NAMES):
+        next_threshold = rank_threshold_function(i, base, growth_factor)
+        if rankpts < next_threshold:
+            # If rankpts is less than the current rank's threshold,
+            # the user is currently in this rank.
+            return rank_name
+
+    # If we finish the loop and haven't returned, user has surpassed the top rank's threshold
+    return RANK_NAMES[-1]
+
+
+def calculate_rank_progress(current_rank, rankpts, base=100, growth_factor=1.5):
+    """
+    Calculates a 0-100 percentage that indicates how far along the user is within the current rank's range.
+    """
+    rank_index = RANK_ORDER[current_rank]
+
+    # Get the current rank's start and end thresholds
+    current_rank_min = rank_threshold_function(rank_index - 1, base, growth_factor) if rank_index > 0 else 0
+    current_rank_max = rank_threshold_function(rank_index, base, growth_factor)
+
+    # Clamp points to current rank range
+    adjusted_points = min(max(rankpts, current_rank_min), current_rank_max)
+
+    # Calculate percentage within this rank's range
+    progress_percentage = ((adjusted_points - current_rank_min) / (current_rank_max - current_rank_min)) * 100
+    return progress_percentage
+
 def update_meter():
     global meter
     meter.configure(amountused=update_radial_progress_bar())
 
 def create_home_page(app):
-    global radial_progress_bar, meter
+    global radial_progress_bar, meter, rankpts
     
     ASSETS_PATH = Path(__file__).parent / "assets"
     MOTIVATIONS_FILE = ASSETS_PATH / "motivations.txt"
@@ -33,9 +91,7 @@ def create_home_page(app):
     # Variables
     totaldays = 203
     dayspassed = 90
-    rank = "diamond"
-    rankpts = 78
-    
+
     left_button_state = BooleanVar(value=False)
     right_button_state = BooleanVar(value=False)
 
@@ -51,7 +107,7 @@ def create_home_page(app):
 
     # Frame definition and layout
     frame_home = ttk.Frame(app)
-    frame_home.pack(fill="both", expand=True)  # Ensure frame_home expands
+    frame_home.pack(fill="both", expand=True)
 
     frame_controls = ttk.Frame(frame_home, bootstyle="primary", padding=0)
     frame_controls.pack(fill="x", padx=10, pady=(10, 5), side="top")
@@ -120,21 +176,25 @@ def create_home_page(app):
     progress_bar.set(dayspassed / totaldays)
     progress_bar.pack(pady=0)
 
-    # Overlay toggle function
     def toggle_overlay():
         nonlocal is_overlay_shown
-        meter.configure(amountused=rankpts)
+
+        # Determine current rank from rankpts
+        current_rank = get_current_rank_from_points(rankpts, base, growth_factor)
+        # Calculate the rank progress percentage
+        rank_progress = int(calculate_rank_progress(current_rank, rankpts, base, growth_factor))
+        meter.configure(amountused=rank_progress)
 
         if is_overlay_shown:
-            overlay_frame.place_forget()        
+            overlay_frame.place_forget()
             meter.configure(bootstyle="danger")
             is_overlay_shown = False
-            meter.configure(amountused=int((dayspassed / totaldays) * 100))
+            update_meter()
         else:
             overlay_frame.place(x=165, y=326, width=150, height=120)
             overlay_frame.tkraise()
 
-            # Update overlay label based on rank
+            # Update overlay label based on current rank
             overlay_label = ttk.Label(
                 overlay_frame,
                 text="Cu",
@@ -143,16 +203,17 @@ def create_home_page(app):
             )
             overlay_label.pack(pady=10)
 
-            if rank == "copper":
+            # Since current_rank is now correct, these conditions will set the correct label and style.
+            if current_rank == "copper":
                 overlay_label.config(text="Cu", bootstyle="dark")
                 meter.configure(bootstyle="dark")
-            elif rank == "silver":
+            elif current_rank == "silver":
                 overlay_label.config(text="Ag", bootstyle="success")
                 meter.configure(bootstyle="success")
-            elif rank == "gold":
+            elif current_rank == "gold":
                 overlay_label.config(text="Au", bootstyle="warning")
                 meter.configure(bootstyle="warning")
-            elif rank == "diamond":
+            elif current_rank == "diamond":
                 overlay_label.config(text="C", bootstyle="info")
                 meter.configure(bootstyle="info")
             else:
@@ -160,6 +221,7 @@ def create_home_page(app):
                 meter.configure(bootstyle="primary")
 
             is_overlay_shown = True
+
 
     # Toggle buttons
     def toggle_left_button():
@@ -232,6 +294,5 @@ def create_home_page(app):
         font=("Helvetica", 15),
     )
     button_1.pack(side="bottom", anchor="s", pady=10)
-
 
     return frame_home

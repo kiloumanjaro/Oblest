@@ -19,6 +19,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datetime import datetime
 from matplotlib.dates import DateFormatter, DayLocator
 
+from bridge import bridge
 from bridge import set_task_for_productivity
 from datetime import datetime
 from loadingOverlay import *
@@ -31,9 +32,23 @@ ASSETS_PATH = OUTPUT_PATH / "assets"
 
 all_tasks = TaskManager()
 
+bridge.register_all_tasks(all_tasks)
+
 def update_radial_progress_bar():
     return int(all_tasks.get_num_completed_tasks() / all_tasks.get_num_total_tasks() * 100)
 
+def calculate_new_rank_points():
+    # current_points = bridge.get_rank_points()
+    current_points = 0
+    # Perform calculations to update the rank points
+    
+    completed_tasks = all_tasks.get_completed_tasks()
+    for task in completed_tasks:
+        current_points += task.difficulty_rating
+    
+    new_points = current_points  # Example calculation
+    bridge.update_rank_points(new_points)
+    return new_points
 
 # Uncomment this following function if wanting to reindex tasks
 # all_tasks.reindex_task_ids()
@@ -833,6 +848,7 @@ def create_tasks_page(app):
 
             update_radial_progress_bar()
             refresh_task_list(course, deadline_date)
+            calculate_new_rank_points()
 
             # Hide the form and show the task list/buttons
             frame_task_form.pack_forget()
@@ -1516,6 +1532,7 @@ def create_tasks_page(app):
 
             # Refresh display
             update_radial_progress_bar()
+            calculate_new_rank_points()
             refresh_task_list(new_course, new_deadline)
             frame_edit_task.pack_forget()
             frame_button.pack(fill="x", padx=int(screen_height * 0.0093), pady=(12, int(screen_height * 0.0046)), side="bottom")

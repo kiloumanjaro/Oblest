@@ -37,6 +37,9 @@ frames["1"] = create_tasks_page(app)
 frames["2"] = create_home_page(app)
 frames["3"] = create_productivity_page(app)
 
+bridge.calculate_new_rank_points()
+update_meter()
+
 # Function to switch pages
 def show_page(page_number):
     """Switches to the selected page and shows a loading overlay."""
@@ -55,6 +58,7 @@ def show_page(page_number):
 
     # Use after() to delay hiding the overlay 
     # (adjust delay as needed for your page loading time)
+    bridge.calculate_new_rank_points()
     update_meter()
     app.after(150, lambda: overlay.hide())
 

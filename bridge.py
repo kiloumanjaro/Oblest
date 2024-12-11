@@ -27,6 +27,32 @@ class Bridge:
             self.show_page_func("3")  # Switch to page "3" (productivity)
             if self.radio_var:
                 self.radio_var.set("3")  # Update radio button variable
+                
+    def register_rank_points(self, rank_points):
+        self.rank_points = rank_points
+
+    def get_rank_points(self):
+        return self.rank_points
+
+    def update_rank_points(self, new_points):
+        if hasattr(self, 'rank_points'):
+            self.rank_points = new_points
+            
+    def register_all_tasks(self, all_tasks):
+        self.all_tasks = all_tasks
+
+    def calculate_new_rank_points(self):
+        if not hasattr(self, 'rank_points') or not hasattr(self, 'all_tasks'):
+            raise ValueError("Either rank points or all tasks have not been registered with the bridge")
+        
+        current_points = 0
+        completed_tasks = self.all_tasks.get_completed_tasks()
+        for task in completed_tasks:
+            current_points += task.difficulty_rating
+        
+        new_points = current_points
+        self.rank_points = new_points
+        return new_points
 
 # Create a global instance of the Bridge
 bridge = Bridge()

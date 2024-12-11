@@ -100,7 +100,6 @@ class Node:
         self.forward = [None] * height
         self.backward = None
 
-
 class SkipList:
     def __init__(self, max_level: int = 16):
         self.max_level = max_level
@@ -294,6 +293,16 @@ class CourseManager:
             tasks.append(current.task)
             current = current.forward[0]
         return tasks
+
+    def completed_tasks_list(self) -> List[Task]:
+        """Returns a list of completed tasks."""
+        completed = []
+        current = self.skip_list.header.forward[0]
+        while current:
+            if current.task.status == TaskStatus.DONE:
+                completed.append(current.task)
+            current = current.forward[0]
+        return completed
     
     # Some function here to return the number of completed tasks
     # This traverses the skip list and counts the number of tasks with status DONE
@@ -508,9 +517,11 @@ class TaskManager:
         all_tasks.sort(key=lambda task: task.priority, reverse=True)  # Sort in descending priority
         return all_tasks[:top_n] if top_n else all_tasks
     
+    
     def get_num_completed_tasks(self) -> int:
         """Returns the number of completed tasks."""
         return sum(course.get_completed_task_count() for course in self.courses.values())
+
     
     def get_num_total_tasks(self) -> int:
         """Returns the number of tasks."""
@@ -557,3 +568,10 @@ class TaskManager:
                 course_manager.save() # Save each course after updating its tasks
 
             self.save_metadata() # Save metadata once after all tasks are reindexed
+
+    def get_completed_tasks(self) -> List[Task]:
+        """Returns a list of all completed tasks across all courses."""
+        completed_tasks = []
+        for course_manager in self.courses.values():
+            completed_tasks.extend(course_manager.completed_tasks_list())
+        return completed_tasks
